@@ -1,0 +1,380 @@
+---
+title: "Modeling pragmatic inferences triggered by informational redundancy"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rwebppl)
+library(tidyverse)
+library(fitdistrplus)
+library(gridExtra)
+library(scales)
+
+data <- read_csv("data/before_after_ratings.csv") %>% mutate_at(vars(id,story:experiment,Qtype,condition:eligible), factor) %>% filter(eligible=="True")
+
+prior_ratings <- data %>% filter(condition=="before" & Qtype %in% c("predictable","unpredictable") & world %in% c("typical","wonky"))
+
+prior_typ_pred <- prior_ratings %>% filter(world=="typical" & Qtype=="predictable")
+prior_wonk_pred <- prior_ratings %>% filter(world=="wonky" & Qtype=="predictable")
+prior_typ_unpred <- prior_ratings %>% filter(world=="typical" & Qtype=="unpredictable")
+prior_wonk_unpred <- prior_ratings %>% filter(world=="wonky" & Qtype=="unpredictable")
+
+posterior_ratings <- data %>% filter(condition=="after" & as.character(Qtype) == as.character(activity) & world %in% c("typical","wonky"))
+
+posterior_typ_pred <- posterior_ratings %>% filter(world=="typical" & activity=="predictable")
+posterior_wonk_pred <- posterior_ratings %>% filter(world=="wonky" & activity=="predictable")
+posterior_typ_unpred <- posterior_ratings %>% filter(world=="typical" & activity=="unpredictable")
+posterior_wonk_unpred <- posterior_ratings %>% filter(world=="wonky" & activity=="unpredictable")
+
+scale_ratings <- function(rating) {
+  (rating/100 - min(rating/100) + 0.001) / (max(rating/100) - min(rating/100) + 0.002)
+}
+```
+
+## Intro
+
+### Empirical priors
+
+#### Typical Predictable
+```{r, cache=TRUE}
+# scale to remove 0 and 1 values (add/subtract 0.001 from edges)
+prior_typ_pred_scaled <- scale_ratings(prior_typ_pred$rating)
+
+# fit beta distribution by maximum likelihood estimation
+fit.prior_typ_pred <- fitdist(prior_typ_pred_scaled, "beta")
+summary(fit.prior_typ_pred)
+plot(fit.prior_typ_pred)
+```
+
+#### Wonky Predictable
+
+In this case, the distribution of responses suggests that participants differ substantially in whether they adjust their estimates for 'predictable activity likelihood' when a context is 'wonky' and should suggest that the activity is unpredictable.  This likely indicates a relative insensitivity to the context, particularly where it does not state quite as bluntly that the activity usually doesn't occur.
+
+**CONSIDER INCLUDING NORMING RATINGS FROM SIMPLER CONTEXT SENTENCES, BUT MAKES MORE DIFFICULT TO COMPARE EMPIRICAL RESULTS**
+
+For this set of ratings and those following, there is a clear 'bump' mid-distribution suggesting that participants have a tendency to click right in the middle of the slider when the rating approximates 50%; this harms model fit somewhat.
+
+```{r, cache=TRUE}
+# scale to remove 0 and 1 values (add/subtract 0.001 from edges)
+prior_wonk_pred_scaled <- scale_ratings(prior_wonk_pred$rating)
+
+# fit beta distribution by maximum likelihood estimation
+fit.prior_wonk_pred <- fitdist(prior_wonk_pred_scaled, "beta")
+summary(fit.prior_wonk_pred)
+plot(fit.prior_wonk_pred)
+```
+
+#### Typical Unpredictable
+```{r, cache=TRUE}
+# scale to remove 0 and 1 values (add/subtract 0.001 from edges)
+prior_typ_unpred_scaled <- scale_ratings(prior_typ_unpred$rating)
+
+# fit beta distribution by maximum likelihood estimation
+fit.prior_typ_unpred <- fitdist(prior_typ_unpred_scaled, "beta")
+summary(fit.prior_typ_unpred)
+plot(fit.prior_typ_unpred)
+```
+
+#### Wonky Unpredictable
+```{r, cache=TRUE}
+# scale to remove 0 and 1 values (add/subtract 0.001 from edges)
+prior_wonk_unpred_scaled <- scale_ratings(prior_wonk_unpred$rating)
+
+# fit beta distribution by maximum likelihood estimation
+fit.prior_wonk_unpred <- fitdist(prior_wonk_unpred_scaled, "beta")
+summary(fit.prior_wonk_unpred)
+plot(fit.prior_wonk_unpred)
+```
+
+## RSA
+
+The baseline RSA model is inherently unequipped to model changes in beliefs about the world that are independent of (although jointly reasoned about with) the current activity state, which is the only thing the utterance speaks to directly.  Habituality can be included in the model, but only as background knowledge that is "given", but not reasoned about.
+
+```{r, echo=FALSE, cache=TRUE}
+base_model <- read_file("models/rsa.webppl")
+
+l0_empty <- as_tibble(webppl(paste(base_model, "literalListener(\"(...)\")", sep="\n")))
+l0_plain <- as_tibble(webppl(paste(base_model, "literalListener(\"plain\")", sep="\n")))
+l0_exclamation <- as_tibble(webppl(paste(base_model, "literalListener(\"exclamation\")", sep="\n")))
+l0_ohyeah <- as_tibble(webppl(paste(base_model, "literalListener(\"oh yeah\")", sep="\n")))
+
+s_happened <- webppl(paste(base_model, "speaker(\"happened\")", sep="\n"))
+s_didnthappen <- webppl(paste(base_model, "speaker(\"didn't happen\")", sep="\n"))
+
+l1_empty <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\",\"both\")", sep="\n")))
+l1_plain <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\",\"both\")", sep="\n")))
+l1_exclamation <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"exclamation\",\"both\")", sep="\n")))
+l1_ohyeah <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\"both\")", sep="\n")))
+```
+
+Below is the `webppl` code for this model, which can be run either on [webppl.org](https://webppl.org), or locally.
+
+```{js, eval=FALSE}
+// Current activity state
+// the activity being described at this point in time either took 
+// place, or didn't
+var state = ["happened","didn't happen"]
+
+// State priors
+// assume highly predictable/habitual activity
+var statePrior = function() {
+  categorical([0.9, 0.1], state)
+}
+
+// Utterances
+// choice of 4 utterances; prosody not modeled separately as affects 
+// only one variant
+var utterance = ['oh yeah','exclamation','plain','(...)']
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for
+// articulatory effort)
+var cost = {
+  "oh yeah": 5,
+  "exclamation": 4,
+  "plain": 3,
+  "(...)": 0
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null utterance is consistent with all activity states
+var meaning = function(utt,state) {
+  utt === "oh yeah" ? state === "happened" : 
+  utt === "exclamation" ? state === "happened" : 
+  utt === "plain" ? state === "happened" : 
+  utt === "(...)" ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 20
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u]) }, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Literal listener
+var literalListener = mem(function(utterance) {
+  return Infer({model: function() {
+    var state = statePrior()
+    condition(meaning(utterance,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state) {
+  return Infer({model: function() {
+    var utterance = utterancePrior()
+    factor(alpha * literalListener(utterance).score(state))
+    return utterance
+  }})
+})
+
+// Pragmatic listener
+var pragmaticListener = function(utterance) {
+  return Infer({model: function() {
+    var state = statePrior()
+    observe(speaker(state),utterance)
+    return state
+  }})
+}
+
+literalListener("(...)")
+literalListener("plain")
+literalListener("exclamation")
+literalListener("oh yeah")
+
+speaker("happened")
+speaker("didn't happen")
+
+pragmaticListener("(...)")
+pragmaticListener("plain")
+pragmaticListener("exclamation")
+pragmaticListener("oh yeah")
+```
+
+Below are the results of this model:
+
+```{r, fig.height = 2, echo=FALSE}
+table <- tableGrob(l0_empty)
+plot <- ggplot(l0_empty, aes(x=support, y=prob)) + geom_bar(stat="identity") + scale_y_continuous(labels=percent, name="percent", limits = c(0,1))
+
+grid.arrange(table, plot, ncol=2)
+```
+
+
+## hRSA
+
+## Noisy channel hRSA
+
+```{r, echo=FALSE, cache=TRUE}
+base_model <- read_file("models/noisy_hrsa.webppl")
+
+# l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
+# l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
+# l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
+# 
+# s_95 <- webppl(paste(base_model, "speaker(\"happened\",0.95)", sep="\n"))
+# s_50 <- webppl(paste(base_model, "speaker(\"happened\",0.5)", sep="\n"))
+# s_5 <- webppl(paste(base_model, "speaker(\"happened\",0.05)", sep="\n"))
+# 
+# l1_empty <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\",\"both\")", sep="\n")))
+# l1_plain <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\",\"both\")", sep="\n")))
+# l1_exclamation <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"exclamation\",\"both\")", sep="\n")))
+# l1_ohyeah <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\"both\")", sep="\n")))
+# 
+# l1_empty_habit <- filter(l1_empty, Parameter=="habituality") %>% mutate_at("value", as.numeric)
+# l1_plain_habit <- filter(l1_plain, Parameter=="habituality") %>% mutate_at("value", as.numeric)
+# l1_exclamation_habit <- filter(l1_exclamation, Parameter=="habituality") %>% mutate_at("value", as.numeric)
+# l1_ohyeah_habit <- filter(l1_ohyeah, Parameter=="habituality") %>% mutate_at("value", as.numeric)
+# 
+# l1_empty_state <- filter(l1_empty, Parameter=="state")
+# l1_plain_state <- filter(l1_plain, Parameter=="state")
+# l1_exclamation_state <- filter(l1_exclamation, Parameter=="state")
+# l1_ohyeah_state <- filter(l1_ohyeah, Parameter=="state")
+```
+
+Below is the `webppl` code for this model, which can be run either on [webppl.org](https://webppl.org), or locally.
+
+```{js, eval=FALSE}
+// Is this a high-habit activity (paying the cashier when shopping) or
+// a low-habit activity (bying apples, paying cashier as habitual 
+// non-payer)?
+// (mostly for demonstration)
+var activity = ["low-habit","high-habit"]
+
+// Assume uniform likelihood / 
+var activityPrior = function() {
+  categorical([0.5, 0.5], activity)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(activity) {
+  activity === "high-habit" ? sample(Beta({a: 2.5734459, b: 0.4543813})) :
+  activity === "low-habit" ? sample(Beta({a: 0.8507573, b: 0.9412288})) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took 
+// place, or didn't
+var state = ["happened","didn't happen"]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances (intended)
+// choice of 4 utterances; prosody not modeled separately as affects 
+// only one variant
+var utterance_i = ['oh yeah','exclamation','plain','(...)']
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for
+// articulatory effort)
+var cost = {
+  "oh yeah": 5,
+  "exclamation": 4,
+  "plain": 3,
+  "(...)": 0
+}
+
+// Utterances (remembered/attended to)
+// assume that utterance most likely to be recalled as itself, but
+// also has non-trivial likelihood of being recalled as 'perceptually
+// neighboring' utterance (with markers for plain utterance; vice
+// versa; no utterance for "plain" utterance; and vice versa).
+// alternately, this can be conceptualized as listener's belief of
+// what the speaker *intended* to say - but unclear if below is best
+// way to represent that
+var utterance_r = function(utterance) {
+  utterance === "oh yeah" ? categorical([0.9,0.1,0.1,0.0001], utterance_i) :
+  utterance === "exclamation" ? categorical([0.1,0.9,0.1,0.0001], utterance_i) :
+  utterance === "plain" ? categorical([0.1,0.1,0.9,0.01], utterance_i) :
+  utterance === "(...)" ? categorical([0.0001,0.0001,0.1,0.9], utterance_i) :
+  true
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null utterance is consistent with all activity states
+var meaning = function(utt,state) {
+  utt === "oh yeah" ? state === "happened" : 
+  utt === "exclamation" ? state === "happened" : 
+  utt === "plain" ? state === "happened" : 
+  utt === "(...)" ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 20
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u]) }, utterance_i)
+  return categorical(uttProbs, utterance_i)
+}
+
+// Literal listener
+var literalListener = mem(function(utterance, habituality) {
+  return Infer({model: function() {
+    var state = statePrior(habituality)
+    var remembered = utterance_r(utterance)
+    condition(meaning(remembered,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality) {
+  return Infer({model: function() {
+    var utterance = utterancePrior()
+    var remembered = utterance_r(utterance)
+    factor(alpha * literalListener(remembered, habituality).score(state))
+    return utterance
+  }})
+})
+
+// Pragmatic listener
+// second argument determines whether function returns state,
+// habituality, or both
+var pragmaticListener = function(utterance, info) {
+  return Infer({method: "rejection", samples: 2500, model: function() {
+    var activity = "high-habit"
+    var habituality = habitualityPrior(activity)
+    var state = statePrior(habituality)
+    var remembered = utterance_r(utterance)
+    observe(speaker(state, habituality),remembered)
+    info === "both" ? {state: state, habituality: habituality} :
+    info === "state" ? state :
+    info === "habituality" ? habituality :
+    true
+  }})
+}
+
+literalListener("(...)",0.95)
+literalListener("(...)",0.5)
+literalListener("(...)",0.05)
+
+speaker("happened",0.95)
+speaker("happened",0.5)
+speaker("happened",0.05)
+
+pragmaticListener("(...)","both")
+pragmaticListener("plain","both")
+pragmaticListener("exclamation","both")
+pragmaticListener("oh yeah","both")
+```
+
+
+## Comparison to empirical results
