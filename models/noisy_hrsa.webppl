@@ -11,8 +11,8 @@ var activityPrior = function() {
 // Habituality priors
 // beta distributions fit to empirical priors
 var habitualityPrior = function(activity) {
-  activity === "high-habit" ? sample(Beta({a: 2.5734459, b: 0.4543813})) :
-  activity === "low-habit" ? sample(Beta({a: 0.8507573, b: 0.9412288})) :
+  activity === "high-habit" ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  activity === "low-habit" ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
   true
 }
 
@@ -46,10 +46,10 @@ var cost = {
 // utterance; and vice versa).
 // alternately, this can be conceptualized as listener's belief of what the speaker
 // *intended* to say - but unclear if below is best way to represent that
-var utterance_r = function(utterance) {
+var utterance_a = function(utterance) {
   utterance === "oh yeah" ? categorical([0.9,0.1,0.1,0.0001], utterance_i) :
   utterance === "exclamation" ? categorical([0.1,0.9,0.1,0.0001], utterance_i) :
-  utterance === "plain" ? categorical([0.1,0.1,0.9,0.01], utterance_i) :
+  utterance === "plain" ? categorical([0.1,0.1,0.9,0.05], utterance_i) :
   utterance === "(...)" ? categorical([0.0001,0.0001,0.1,0.9], utterance_i) :
   true
 }
@@ -66,7 +66,7 @@ var meaning = function(utt,state) {
 }
 
 // Speaker optimality
-var alpha = 20
+var alpha = 15
 
 // Utterance prior
 // utterance prior determined by utterance cost, as defined above
@@ -79,7 +79,7 @@ var utterancePrior = function() {
 var literalListener = mem(function(utterance, habituality) {
   return Infer({model: function() {
     var state = statePrior(habituality)
-    var remembered = utterance_r(utterance)
+    var remembered = utterance_a(utterance)
     condition(meaning(remembered,state))
     return state
   }})
@@ -89,19 +89,20 @@ var literalListener = mem(function(utterance, habituality) {
 var speaker = mem(function(state, habituality) {
   return Infer({model: function() {
     var utterance = utterancePrior()
-    var remembered = utterance_r(utterance)
+    var remembered = utterance_a(utterance)
     factor(alpha * literalListener(remembered, habituality).score(state))
     return utterance
   }})
 })
 
 // Pragmatic listener
+// assume high-habit activity for demonstration
 var pragmaticListener = function(utterance, info) {
-  return Infer({method: "rejection", samples: 2500, model: function() {
+  return Infer({method: "rejection", samples: 5000, model: function() {
     var activity = "high-habit"
     var habituality = habitualityPrior(activity)
     var state = statePrior(habituality)
-    var remembered = utterance_r(utterance)
+    var remembered = utterance_a(utterance)
     observe(speaker(state, habituality),remembered)
     info === "both" ? {state: state, habituality: habituality} :
     info === "state" ? state :
@@ -111,56 +112,15 @@ var pragmaticListener = function(utterance, info) {
 }
 
 
-// print("Literal Listener, Zero Utterance:")
-// print("95% activity likelihood")
-// viz(literalListener("(...)",0.95))
-// print("50% activity likelihood")
-// viz(literalListener("(...)",0.5))
-// print("5% activity likelihood")
-// viz(literalListener("(...)",0.05))
+// literalListener("(...)",0.95)
+// literalListener("(...)",0.5)
+// literalListener("(...)",0.05)
 
-// print("--------------------------------------------------")
+// speaker("happened",0.95)
+// speaker("happened",0.5)
+// speaker("happened",0.05)
 
-// print("Speaker, Activity happened:")
-// print("95% activity likelihood")
-// viz(speaker("happened",0.95))
-// print("50% activity likelihood")
-// viz(speaker("happened",0.5))
-// print("5% activity likelihood")
-// viz(speaker("happened",0.05))
-
-// print("--------------------------------------------------")
-
-// print("Pragmatic Listener, Habituality Only:")
-// print("Zero Utterance")
-// viz(pragmaticListener("(...)","habituality"))
-// print("Plain Utterance")
-// viz(pragmaticListener("plain","habituality"))
-// print("Exclamation Mark")
-// viz(pragmaticListener("exclamation","habituality"))
-// print("Oh, yeah")
-// viz(pragmaticListener("oh yeah","habituality"))
-
-// print("--------------------------------------------------")
-
-// print("Pragmatic Listener, State Only:")
-// print("Zero Utterance")
-// viz(pragmaticListener("(...)","state"))
-// print("Plain Utterance")
-// viz(pragmaticListener("plain","state"))
-// print("Exclamation Mark")
-// viz(pragmaticListener("exclamation","state"))
-// print("Oh, yeah")
-// viz(pragmaticListener("oh yeah","state"))
-
-// print("--------------------------------------------------")
-
-// print("Pragmatic Listener, Both:")
-// print("Zero Utterance")
-// viz(pragmaticListener("(...)","both"))
-// print("Plain Utterance")
-// viz(pragmaticListener("plain","both"))
-// print("Exclamation Mark")
-// viz(pragmaticListener("exclamation","both"))
-// print("Oh, yeah")
-// viz(pragmaticListener("oh yeah","both"))
+// pragmaticListener("(...)","both")
+// pragmaticListener("plain","both")
+// pragmaticListener("exclamation","both")
+// pragmaticListener("oh yeah","both")

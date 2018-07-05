@@ -1,0 +1,76 @@
+---
+output:
+  pdf_document:
+    latex_engine: lualatex
+  html_document: default
+header-includes:
+   - \usepackage{stmaryrd}
+   # - \setlength{\parindent}{1em}
+   - \setlength{\parskip}{0.5em}
+mainfont: Times New Roman
+documentclass: article
+classoption: a4paper
+fontsize: 11pt
+geometry: margin=0.93in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+**Modeling the effects of attentional prominence and world knowledge in pragmatic reasoning**
+<!-- Ekaterina Kravtchenko & Vera Demberg (Saarland University)   -->
+
+Research on pragmatic inferences has to date paid relatively little attention to the effects of pragmatic reasoning on common ground beliefs, or world knowledge, although revision of said beliefs appears to be a strategy listeners use to interpret pragmatically unexpected utterances.  Formal models of pragmatic reasoning, with the notable exception of Degen et al. (2015), similarly do not typically account for the effects unexpected utterances may have on background beliefs about the world.  Here, we present a Rational Speech Act (RSA) model (Frank & Goodman, 2012; Goodman & Stuhlmüller, 2013) of how background beliefs about activity *habituality* may be updated upon encountering informationally redundant descriptions of said activities.
+
+Additionally, we address what we believe to be a serious issue in building formal models of pragmatic reasoning, when the reasoning is based partially on the possibility that a message may have been misheard or not attended to.  Longer or more prominent utterances should have a better chance of being accurately perceived or attended to than less prominent, but semantically meaning-equivalent utterances, which may either generate or strengthen pragmatic inferences.  Bergen & Goodman (2015) demonstrate that, in the case of prosodic stress or comprehension of utterance fragments, it is necessary to incorporate noisy-channel notions about the perceptual benefit of increased effort into a standard RSA model.  We confirm that a similar mechanism is required to correctly predict the use, and relative strength, of pragmatic inferences due to either more, or less prominent informationally redundant activity descriptions.
+
+Here, we are considering utterances such as the following:
+
+1. "*John went shopping. He paid the cashier{!|.}*"
+2. "*John went shopping.*"
+
+In (1), saying *he paid the cashier* is informationally redundant, as cashier-paying is an extremely predictable activity which should automatically be assumed, given the mention of *shopping*.  The predicted, and in the case of (a) and (b), empirically validated (Kravtchenko & Demberg, 2015, 2017), effects associated with the use and comprehension of such utterances are:
+
+a. As *paid the cashier* is informationally redundant, this utterance at face value is pragmatically odd.  Listeners resolve this by assuming that cashier-paying is *not*, in fact, typical for this individual and in this context, contrary to their prior beliefs.
+b. Expending more articulatory effort on an informationally redundant utterance, for example by way of using exclamatory prosody, should strengthen the inference, as increased articulatory effort reflects greater speaker intent to transmit precisely this message to the listener.
+c. Speakers should preferentially use more attentionally prominent utterances to transmit particularly unusual or unexpected meanings, even when doing so is relatively costly.
+
+Given that the literal meaning of *paid the cashier* communicates nothing about activity *habituality* directly, standard RSA models accurately predict only that the *cashier* was definitely paid in the case of utterances (1), and that they may or may not have been paid, according to prior beliefs about the habituality of *paying*, in the case of utterance (2).  Activity habituality by itself cannot be modeled, since all utterances are at face value equally consistent with all possible *habitualities*.
+
+<!-- While baseline Rational Speech Act (RSA) models accurately predict (...), they face several problems in working with common ground assumptions: 1) while they accurately model the effect of the utterance on listener beliefs about the world state, they do not model any 'ancillary' effects on related common ground assumptions; 2) while they provide a way to account for speaker choice and listener interpretation of utterances with more or less cost, they do not accurately model speaker choice and listener interpretation of more/less costly utterances which have the same literal interpretation, as they do not assign any communicative benefit (in terms of greater likelihood of accurate perception, for example) to utterances on which greater articulatory effort is expended. -->
+
+<!-- The final model we present accounts for all three qualitative patterns.  Here, we demonstrate which assumptions are necessary for it to do so. -->
+
+<!-- The baseline RSA model does not account for any pragmatic effects, as the meaning of the utterance is semantically and pragmatically unambiguous, and therefore consistent with only one interpretation: "John paid the cashier" (or, in the case of a zero utterance, "John may or may not have paid the cashier"); while none of the utterances say anything directly about the habitual state of John's cashier-paying, making the model useless for modeling background knowledge.   -->
+
+To model the pragmatic inference regarding activity *habituality*, it is necessary to minimally incorporate joint reasoning about background knowledge, very similarly to Degen et al. (2015), as follows:
+
+- The literal listener arrives at the most likely current world state (whether the activity took place, or not), given the utterance and prior beliefs about activity habituality: $P_{L_0} (s|u,h) \propto \llbracket u\rrbracket (s) \cdot P(s|h)$.  $P_{L_0}$ does not reason about *habituality*, as this is not a part of the literal interpretation.<!--   Only the "zero" utterance is semantically ambiguous, and affected by habituality assumptions. -->
+- The pragmatic speaker considers the likelihood that a given utterance will communicate the current activity state to the listener, while balancing the cost of uttering one of utterances (1) instead of (2), given common-ground beliefs about *habituality*: $P_{S_1}(u|s,h) \propto \exp(\alpha (\log P_{L_0}(s|u,h)) - c(u))$.
+- The pragmatic listener considers the likelihood that a given utterance would be chosen by the speaker, given the probability of particular world states and activity habitualities, and arrives at the most likely interpretation on this basis: $P_{L_1}(s,h|u) \propto P_{S_1}(u|s,h) \cdot P(s|h) \cdot P(h)$.
+
+This model correctly captures predicted effect (a): that if an activity is described explicitly, the *habituality* is likely to be low.  What it does not, however, capture is that there is no possibility of simply leveraging utterance costs (for example) to capture effects (b) and (c) above.  There are two possible ways of articulating utterance (1), with or without exclamatory prosody, with the former more costly.  The more attentionally prominent utterance, with exclamatory prosody, will never be of any advantage to the literal listener, in terms of whether it effectively communicates the current world state; and likewise of no advantage to the speaker, either in terms of likelihood of accurate message transmission to the literal listener, or the speaker's presumed goal to conserve articulatory effort.  As a consequence, the pragmatic listener will not infer that the more effortful utterance is more likely to communicate an atypical meaning.
+
+The failure of standard RSA models to derive pragmatic inferences of different strengths, given semantically meaning-equivalent utterances, is directly analogous to their failure to derive M-implicatures or inferences due to prosodic stress, as detailed and mathematically proven in Bergen (2016). We consider this a somewhat serious failure, as these models fail, as a result, to model any of the many empirically demonstrated effects that increased utterance salience has on utterance choice or comprehension, also predicted by psycholinguistic theories of language comprehension (e.g. Levy 2008).
+
+In order to capture effects (b) and (c), it is necessary to assign some attentional or memory-related benefit to the more costly redundant utterance, already active at the $L_0$ level.  Empirically, this is supported by the fact that readers often cannot recall whether elements in a stereotyped activity sequence were explicitly mentioned, or not (Bower et al. 1979), and that informational redundancy, even at the multi-word level, in part serves the purpose of ensuring that listeners attend to and accurately recall relevant information (Walker 1993, Baker et al. 2008).  The noisy-channel RSA model proposed by Bergen & Goodman (2015), with minimal modification, successfully captures this intuition, although in this case we consider the probability that an utterance is attended to and stored in memory, rather than simply misheard:
+
+- $P_{L_0}(s|u_r,h) \propto \llbracket u_r \rrbracket (s) \cdot P(s|h) \cdot \sum\limits_{u_i: \llbracket u_i \rrbracket (s) = 1} P(u_i)P(u_r|u_i)$
+- $P_{S_1}(u_i|s,h) \propto \exp(\alpha (\sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h)) - c(u_i))$
+- $P_{L_1}(s,h|u_r) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h)P(u_r|u_i)$
+
+In this case, $u_r$ is the utterance maintained in memory or attention, and $u_i$ the utterance the speaker intends to transmit.  A redundant event description without exclamatory prosody is less likely to be attended to, and more likely to be misperceived or misremembered by the literal listener as utterance (2).  The pragmatic speaker must take into account that their utterance may not be attended to or remembered by the listener, and the pragmatic listener likewise considers the possibility that they may fail to attend to or remember what the speaker uttered.
+
+<!-- The likelihood of the literal listener interpreting the current world state accurate is increased when the utterance is more perceptually salient, and less likely to be misperceived as the "null" utterance, or simply not attended to.  The pragmatic speaker chooses an utterance now in part based on the likelihood of the listener perceiving it accurately.  The pragmatic listener, in turn, interprets the perceived utterance based on the speaker's likelihood of using said utterance to communicate a particular activity state and habituality. -->
+
+This model qualitatively captures all three effects above: that *habituality* is more likely to be low if utterances (1) are chosen over utterance (2); that speakers are likely to use more, rather than less, effortful utterances to communicate less likely meanings; and that more effortful utterances lead to stronger inferences of low *habituality* (for high-*habituality* activities).
+
+<!-- Modeled hbituality estimates, as presented here, are taken from median values collected empirically for a prior publication, as well as their empirical likelihood.  State probabilities are taken to simply be a Bernoulli flip (???) of the habituality value (0-100%). A model that directly samples the prior from a distribution of empirical habitualities (essentially, state probabilities), which are Beta-distributed, is currently in the works. -->
+
+Overall, this model confirms that RSA models incorporating joint reasoning about world knowledge, as previously implemented by Degen et al. (2015), can  model changes in said knowledge, including in the case of "zero" utterances.  It also confirms and underscores, following Bergen (2016), that simply assigning different costs to identically meaningful utterances does not allow one to capture the intuitive and measured effects of increased effort, or message recoverability, on utterance choice or listener comprehension.  Further, it extends the noisy-channel model in Bergen & Goodman (2015) beyond the level of relatively low-level utterance perception, to (presumably) higher-level attentional processes.
+
+\scriptsize
+
+Baker, R., Gill, A. J., & Cassell, J. (2008). Reactive redundancy and listener comprehension in direction-giving.\circ Bergen, L. (2016). Joint inference in pragmatic reasoning.\circ Bergen, L., & Goodman, N. D. (2015). The strategic use of noise in pragmatic reasoning.\circ Bower, G. H., Black, J. B., & Turner, T. J. (1979). Scripts in memory for text.\circ Degen, J., Tessler, M. H., & Goodman, N. D. (2015). Wonky worlds: Listeners revise world knowledge when utterances are odd.\circ Frank, M. C., & Goodman, N. D. (2012). Predicting pragmatic reasoning in language games.\circ Goodman, N. D., & Stuhlmüller, A. (2013). Knowledge and Implicature: Modeling Language Understanding as Social Cognition.\circ Kravtchenko, E. & Demberg, V. (2015). Semantically underinformative utterances trigger pragmatic inferences.\circ Kravtchenko, E. & Demberg, V. (2017). Informationally Redundant Event Descriptions Alter Prior Beliefs about Event Typicality.\circ Levy, R. (2008). A noisy-channel model of rational human sentence comprehension under uncertain input.\circ Walker, M. A. (1993). Informational redundancy and resource bounds in dialogue.
+
+<!-- **graphical demonstration of model / noisy channel** -->

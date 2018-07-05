@@ -1,0 +1,108 @@
+// Is this a high-habit activity (paying the cashier when shopping) or a
+// low-habit activity (bying apples, paying cashier as habitual non-payer)?
+// (mostly for demonstration)
+var activity = ["low-habit","high-habit"]
+
+// Assume uniform likelihood / 
+var activityPrior = function() {
+  categorical([0.5, 0.5], activity)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(activity) {
+  activity === "high-habit" ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  activity === "low-habit" ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took place, or didn't
+var state = ["happened","didn't happen"]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances (intended)
+// choice of 4 utterances; prosody not modeled separately as affects only one variant
+var utterance = ['oh yeah','exclamation','plain','(...)']
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for articulatory effort)
+var cost = {
+  "oh yeah": 5,
+  "exclamation": 4,
+  "plain": 3,
+  "(...)": 0
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null utterance is consistent with all activity states
+var meaning = function(utt,state) {
+  utt === "oh yeah" ? state === "happened" : 
+  utt === "exclamation" ? state === "happened" : 
+  utt === "plain" ? state === "happened" : 
+  utt === "(...)" ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 15
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u]) }, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Literal listener
+var literalListener = mem(function(utterance, habituality) {
+  return Infer({model: function() {
+    var state = statePrior(habituality)
+    condition(meaning(utterance,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality) {
+  return Infer({model: function() {
+    var utterance = utterancePrior()
+    factor(alpha * literalListener(utterance, habituality).score(state))
+    return utterance
+  }})
+})
+
+// Pragmatic listener
+// assume high-habit activity for demonstration
+var pragmaticListener = function(utterance, info) {
+  return Infer({method: "rejection", samples: 5000, model: function() {
+    var activity = "high-habit"
+    var habituality = habitualityPrior(activity)
+    var state = statePrior(habituality)
+    observe(speaker(state, habituality),utterance)
+    info === "both" ? {state: state, habituality: habituality} :
+    info === "state" ? state :
+    info === "habituality" ? habituality :
+    true
+  }})
+}
+
+
+// literalListener("(...)",0.95)
+// literalListener("(...)",0.5)
+// literalListener("(...)",0.05)
+
+// speaker("happened",0.95)
+// speaker("happened",0.5)
+// speaker("happened",0.05)
+
+// pragmaticListener("(...)","both")
+// pragmaticListener("plain","both")
+// pragmaticListener("exclamation","both")
+// pragmaticListener("oh yeah","both")

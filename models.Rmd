@@ -27,72 +27,194 @@ posterior_wonk_pred <- posterior_ratings %>% filter(world=="wonky" & activity=="
 posterior_typ_unpred <- posterior_ratings %>% filter(world=="typical" & activity=="unpredictable")
 posterior_wonk_unpred <- posterior_ratings %>% filter(world=="wonky" & activity=="unpredictable")
 
+rsa_sourcecode <- paste(readLines("models/rsa.webppl"), collapse="\n")
+hrsa_sourcecode <- paste(readLines("models/hrsa.webppl"), collapse="\n")
+noisy_hrsa_sourcecode <- paste(readLines("models/noisy_hrsa.webppl"), collapse="\n")
+
+########
+
 scale_ratings <- function(rating) {
   (rating/100 - min(rating/100) + 0.001) / (max(rating/100) - min(rating/100) + 0.002)
+}
+
+dist_one <- function(result,title) {
+  ggplot(result, aes(x=habituality)) + geom_density() + scale_fill_manual(values="#E69F00") + ylim(0,12) + ggtitle(title)
+}
+
+dist_both <- function(result,title,levels) {
+  result$state <- factor(result$state, levels=levels)
+  ggplot(result, aes(x=habituality, fill=state)) + geom_density(alpha=0.5) + scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9"), drop=FALSE) + ylim(0,20) + ggtitle(title)
+}
+
+results <- function(result, title, levels) {
+  table <- tableGrob(result)
+  result$support <- factor(result$support, levels=levels)
+  plot <- ggplot(result, aes(x=support, y=prob)) +   geom_bar(stat="identity") + scale_y_continuous(labels=percent, name="percent", limits = c(0,1)) + scale_x_discrete(drop=FALSE)
+  grid.arrange(top=title, table, plot, ncol=2)
+}
+
+prob_state <- function(result) {
+  result %>% dplyr::select(support = state) %>% group_by(support) %>% tally() %>% mutate(prob = n / sum(n)) %>% dplyr::select(support,prob)
+}
+
+prob_habit <- function(result) {
+  result %>% dplyr::select(habituality)
+}
+
+prob_both <- function(result) {
+  result %>% spread(Parameter, value) %>% dplyr::select(-Iteration, -Chain) %>% mutate_at("habituality", as.numeric)
 }
 ```
 
 ## Intro
 
+Research on pragmatic inference has to date paid relatively little attention to the effects of pragmatic reasoning on common ground beliefs, or background world knowledge, although revision of said beliefs is a strategy that listeners may use to interpret pragmatically unexpected utterances.  Here we present a Rational Speech Act (RSA) model ([Frank & Goodman, 2012](http://science.sciencemag.org/content/336/6084/998); [Goodman & Stuhlmüller, 2013](https://stuhlmueller.org/papers/implicature-topics2013.pdf)) of how background beliefs about activity *habituality* may be updated upon encountering informationally redundant descriptions of said activities.  Intuitively, one expect that upon hearing something like "*John went shopping. He paid the cashier!*", a comprehender may conclude that because paying the cashier during shopping is an entirely expected activity which doesn't typically warrant mention, *John* must not be a habitual cashier-payer.
+
+Additionally, we address an issue that arises when pragmatic reasoning is partially dependent on the possibility that a message may have been misheard or not attended to.  Longer or otherwise more prominent utterances should have a better chance of being accurately perceived or attended to than less prominent, but semantically meaning-equivalent utterances [(Wilson & Sperber, 2004)](http://www.dan.sperber.fr/wp-content/uploads/2004_wilson_relevance-theory.pdf), which may either generate or strengthen pragmatic inferences in response to those utterances (at the very least, if an utterance is not attended to, it will not generate an inference).  [Bergen & Goodman (2015)](https://cocolab.stanford.edu/papers/BergenGoodman2015-TiCS.pdf) and [Bergen (2016)](https://dspace.mit.edu/handle/1721.1/106430) demonstrate that the standard RSA model is unable to generate different inferences, or inferences of different strengths, for utterances with the same semantic meaning.  Similar to these authors, we build a model which incorporates the notion that more prominent utterances should have a better chance of being attended to (or recalled accurately), and should therefore generate stronger inferences.
+
+### Data
+
+Here, we consider utterances such as the following:
+
+1. "*John went shopping. He paid the cashier{!|.}*"
+2. "*John went shopping.*"
+
+In (1), saying *he paid the cashier* is informationally redundant, as cashier-paying is in context a very predictable activity, which should automatically be assumed simply given the mention of *shopping* ([Bower et al., 1979](https://stanford.edu/~gbower/1979/scripts_memory_text.pdf)).  The predicted, and, in the case of (a) and (b), empirically validated ([Kravtchenko & Demberg, 2015](https://mindmodeling.org/cogsci2015/papers/0213/paper0213.pdf), 2017) effects associated with the use and comprehension of such utterances are:
+
+a. As the utterance *paid the cashier* is informationally redundant, at face value it is pragmatically odd.  Comprehenders resolve the pragmatic anomaly by determining that cashier-paying is *not*, in fact, typical for this individual and in this context, contrary to their prior beliefs.
+b. Expending more effort on communicating an informationally redundant utterance, for example by using exclamatory prosody, should strengthen the inference, as increased articulatory effort (and increased attempts at attention-grabbing) reflect greater speaker intent to transmit precisely this message to the listener.
+c. Speakers should preferentially use more attentionally prominent utterances to transmit particularly unusual or unexpected meanings, even when doing so is relatively costly.
+
+First, we very briefly present our empirical data, which we later feed into a series of models (standard RSA, RSA with joint reasoning, noisy-channel RSA).
+
 ### Empirical priors
 
+Prior beliefs regarding the likelihood of various activities occurring were collected empirically - by measuring the *habituality* (likelihood of occurrence) of the activity.  This was done by asking comprehenders to rate, on a scale of 0 (never) to 100 (always), how often they thought someone engaged in a particular activity, when engaged in a certain event sequence (*script*) which, by common knowledge, habitually includes said activity:
+
+- "How often do you think John usually pays the cashier, when grocery shopping?"
+
+This question was asked after presenting comprehenders with either a neutral context mentioning a certain script, or a "wonky" context mentioning said script.  The "wonky" context either hinted strongly, or explicitly stated, that the individual in question did *not* habitually engage in the usually-habitual activity.  An example can be seen below:
+
+1. **neutral**: "John often goes to the grocery store around the corner from his apartment."
+2. **wonky**: "John is typically broke, and doesn't usually pay when he goes to the grocery store."
+
+Additionally, as a control, and to use as a comparison to the "wonky" condition above, we also collected ratings for "non-predictable" activities, which are consistent with the script, but not expected -- for example, buying apples when grocery shopping:
+
+- "How often do you think John usually gets apples, when grocery shopping?"
+
+Below I plot the distributions of ratings we collected from participants, and fit beta (probability) distributions to each condition.  These plots show how likely any particular activity *habituality* is: since we don't know precisely how *habitual* any given activity is (or is believed to be), we have the following ranges of estimates collected from our participants.
+
+It is important to note, however, that an activity rated (for example) at 50%, on a *never* to *always* scale, is not necessarily one that participants believe occurs 50% of the time.  These should therefore be considered as rough relative stimates of activity habituality.
+
 #### Typical Predictable
-```{r, cache=TRUE}
+
+**Context: **"*John often goes to the grocery store around the corner from his apartment.*"  
+**Question: **"*How often do you think John usually pays the cashier, when grocery shopping?*"
+
+Here, it is evident that the vast majority of comprehenders believe that John is a typical cashier-payer.
+
+```{r typ pred fit, cache=TRUE}
 # scale to remove 0 and 1 values (add/subtract 0.001 from edges)
 prior_typ_pred_scaled <- scale_ratings(prior_typ_pred$rating)
 
 # fit beta distribution by maximum likelihood estimation
-fit.prior_typ_pred <- fitdist(prior_typ_pred_scaled, "beta")
+fit.prior_typ_pred <- fitdist(prior_typ_pred_scaled, "beta", method="mle")
+```
+```{r typ pred summary, cache=TRUE, echo=FALSE}
 summary(fit.prior_typ_pred)
 plot(fit.prior_typ_pred)
 ```
 
 #### Wonky Predictable
 
-In this case, the distribution of responses suggests that participants differ substantially in whether they adjust their estimates for 'predictable activity likelihood' when a context is 'wonky' and should suggest that the activity is unpredictable.  This likely indicates a relative insensitivity to the context, particularly where it does not state quite as bluntly that the activity usually doesn't occur.
+**Context: **"*John is typically broke, and doesn't usually pay when he goes to the grocery store.*"  
+**Question: **"*How often do you think John usually pays the cashier, when grocery shopping?*"
 
-**CONSIDER INCLUDING NORMING RATINGS FROM SIMPLER CONTEXT SENTENCES, BUT MAKES MORE DIFFICULT TO COMPARE EMPIRICAL RESULTS**
+In this case, the distribution of responses suggests that participants differ in whether they adjust their estimates for *activity habituality* when a context is 'wonky' (and either clearly states, or suggests, that the activity is unpredictable), although a large number shift their estimates considerably.  This likely indicates a relative insensitivity to the context, particularly where it does not state quite as bluntly that the activity usually doesn't occur.  Overall, however, comprehenders who see the informationally redundant utterance are relatively likely to conclude that *John* is *not* a habitual cashier-payer.
 
-For this set of ratings and those following, there is a clear 'bump' mid-distribution suggesting that participants have a tendency to click right in the middle of the slider when the rating approximates 50%; this harms model fit somewhat.
+<!-- **CONSIDER INCLUDING NORMING RATINGS FROM SIMPLER CONTEXT SENTENCES, BUT MAKES MORE DIFFICULT TO COMPARE EMPIRICAL RESULTS** -->
 
-```{r, cache=TRUE}
+To note, for this set of ratings, and those following, there is a clear 'bump' mid-distribution, suggesting that participants have a tendency to click right in the middle of the slider when the rating roughly approximates 50%.  This does harm distribution fit somewhat.
+
+```{r wonk pred fit, cache=TRUE, echo=FALSE}
 # scale to remove 0 and 1 values (add/subtract 0.001 from edges)
 prior_wonk_pred_scaled <- scale_ratings(prior_wonk_pred$rating)
 
 # fit beta distribution by maximum likelihood estimation
-fit.prior_wonk_pred <- fitdist(prior_wonk_pred_scaled, "beta")
+fit.prior_wonk_pred <- fitdist(prior_wonk_pred_scaled, "beta", method="mle")
 summary(fit.prior_wonk_pred)
 plot(fit.prior_wonk_pred)
+
+js.prior_typ_pred <- paste0("var beta_high_a = ",fit.prior_typ_pred$estimate[1],"\n","var beta_high_b = ",fit.prior_typ_pred$estimate[2],"\n","var beta_low_a = ",fit.prior_wonk_pred$estimate[1],"\n","var beta_low_b = ",fit.prior_wonk_pred$estimate[2],"\n\n")
 ```
 
 #### Typical Unpredictable
-```{r, cache=TRUE}
+
+**Context: **"*John often goes to the grocery store around the corner from his apartment.*"  
+**Question: **"*How often do you think John usually gets apples, when grocery shopping?*"
+
+For this set of ratings and the following, it is clear that participants take apple-bying to be a moderately likely to relatively unpredictable activity.  I will not work with this data further in this demonstration, but it can likewise be fed into the final model to yield estimates approximating our empirical results.
+
+```{r typ unpred fit, cache=TRUE, echo=FALSE}
 # scale to remove 0 and 1 values (add/subtract 0.001 from edges)
 prior_typ_unpred_scaled <- scale_ratings(prior_typ_unpred$rating)
 
 # fit beta distribution by maximum likelihood estimation
-fit.prior_typ_unpred <- fitdist(prior_typ_unpred_scaled, "beta")
+fit.prior_typ_unpred <- fitdist(prior_typ_unpred_scaled, "beta", method="mle")
 summary(fit.prior_typ_unpred)
 plot(fit.prior_typ_unpred)
 ```
 
 #### Wonky Unpredictable
-```{r, cache=TRUE}
+
+**Context: **"*John is typically broke, and doesn't usually pay when he goes to the grocery store.*"  
+**Question: **"*How often do you think John usually gets apples, when grocery shopping?*"
+
+Here, it appears that comprehenders are only slightly affected by the *wonky* context - *activity habituality* estimates do decrease slightly, but likely as a result of a general suspicion that *John* does not engage in very typical grocery shopping.
+
+```{r wonk unpred fit, cache=TRUE, echo=FALSE}
 # scale to remove 0 and 1 values (add/subtract 0.001 from edges)
 prior_wonk_unpred_scaled <- scale_ratings(prior_wonk_unpred$rating)
 
 # fit beta distribution by maximum likelihood estimation
-fit.prior_wonk_unpred <- fitdist(prior_wonk_unpred_scaled, "beta")
+fit.prior_wonk_unpred <- fitdist(prior_wonk_unpred_scaled, "beta", method="mle")
 summary(fit.prior_wonk_unpred)
 plot(fit.prior_wonk_unpred)
 ```
 
+## General Model Setup
+
+**Possible Utterances:** (in roughly increasing order of effort)
+
+* "*(...)*" (nothing)
+* "*John paid the cashier.*"
+* "*John paid the cashier!*"
+* "*Oh yeah, and John paid the cashier.*"
+
+**Possible States:**
+
+* Activity *happened* on the particular instance of *grocery shopping* (for example) being spoken about.
+* Activity *didn't happen* on the particular instance being spoken about.
+
+**Possible Habitualities:**
+
+* How *habitual* is the activity, on a scale of 0-100 (*never* to *always*). Treated as expected likelihood that activity will occur on any particular instance (a perfectly *habitual* activity will always occur; an activity considered to "never" occur never will).
+
 ## RSA
 
-The baseline RSA model is inherently unequipped to model changes in beliefs about the world that are independent of (although jointly reasoned about with) the current activity state, which is the only thing the utterance speaks to directly.  Habituality can be included in the model, but only as background knowledge that is "given", but not reasoned about.
+**Utterance:** $u$ (the particular utterance, or lack thereof, uttered by the speaker)  
+**Current activity state:** $s$ (did the activity occur during the most current activity sequence in question)  
 
-```{r, echo=FALSE, cache=TRUE}
-base_model <- read_file("models/rsa.webppl")
+The baseline RSA model is inherently unequipped to model changes in beliefs about the world that are independent of the current activity state ($s$):
+
+* $P_{L_0}(s|u) \propto [\![u]\!] (s) \cdot P(s)$
+* $P_{S_1}(u|s) \propto \exp(\alpha (\log P_{L_0}(s|u)) - c(u))$
+* $P_{L_1}(s|u) \propto P_{S_1}(u|s) \cdot P(s)$
+
+Given that the literal meaning of *paid the cashier* ($[\![u]\!]$) does not communicate anything about activity *habituality* directly, the standard RSA model can predict only that the *cashier* was definitely paid in the case of utterances (1), and that they may or may not have been paid in the case of utterance (2).  Activity habituality by itself cannot be reasoned about in the standard RSA, since all utterances are at face value equally consistent with all possible *habitualities*.
+
+```{r RSA model, echo=FALSE, cached=TRUE}
+base_model <- paste(js.prior_typ_pred, "\n", rsa_sourcecode, sep="\n")
 
 l0_empty <- as_tibble(webppl(paste(base_model, "literalListener(\"(...)\")", sep="\n")))
 l0_plain <- as_tibble(webppl(paste(base_model, "literalListener(\"plain\")", sep="\n")))
@@ -110,271 +232,268 @@ l1_ohyeah <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\
 
 Below is the `webppl` code for this model, which can be run either on [webppl.org](https://webppl.org), or locally.
 
-```{js, eval=FALSE}
-// Current activity state
-// the activity being described at this point in time either took 
-// place, or didn't
-var state = ["happened","didn't happen"]
-
-// State priors
-// assume highly predictable/habitual activity
-var statePrior = function() {
-  categorical([0.9, 0.1], state)
-}
-
-// Utterances
-// choice of 4 utterances; prosody not modeled separately as affects 
-// only one variant
-var utterance = ['oh yeah','exclamation','plain','(...)']
-
-// Utterance cost
-// (rough estimate of number of constituents + extra for
-// articulatory effort)
-var cost = {
-  "oh yeah": 5,
-  "exclamation": 4,
-  "plain": 3,
-  "(...)": 0
-}
-
-// Meaning
-// literal meaning of all overt utterances is that activity happened.
-// literal meaning of null utterance is consistent with all activity states
-var meaning = function(utt,state) {
-  utt === "oh yeah" ? state === "happened" : 
-  utt === "exclamation" ? state === "happened" : 
-  utt === "plain" ? state === "happened" : 
-  utt === "(...)" ? true :
-  true
-}
-
-// Speaker optimality
-var alpha = 20
-
-// Utterance prior
-// utterance prior determined by utterance cost, as defined above
-var utterancePrior = function() {
-  var uttProbs = map(function(u) {return Math.exp(-cost[u]) }, utterance)
-  return categorical(uttProbs, utterance)
-}
-
-// Literal listener
-var literalListener = mem(function(utterance) {
-  return Infer({model: function() {
-    var state = statePrior()
-    condition(meaning(utterance,state))
-    return state
-  }})
-})
-
-// Speaker
-var speaker = mem(function(state) {
-  return Infer({model: function() {
-    var utterance = utterancePrior()
-    factor(alpha * literalListener(utterance).score(state))
-    return utterance
-  }})
-})
-
-// Pragmatic listener
-var pragmaticListener = function(utterance) {
-  return Infer({model: function() {
-    var state = statePrior()
-    observe(speaker(state),utterance)
-    return state
-  }})
-}
-
-literalListener("(...)")
-literalListener("plain")
-literalListener("exclamation")
-literalListener("oh yeah")
-
-speaker("happened")
-speaker("didn't happen")
-
-pragmaticListener("(...)")
-pragmaticListener("plain")
-pragmaticListener("exclamation")
-pragmaticListener("oh yeah")
+```{js RSA code, eval=FALSE, code=rsa_sourcecode}
 ```
 
-Below are the results of this model:
+### Results
 
-```{r, fig.height = 2, echo=FALSE}
-table <- tableGrob(l0_empty)
-plot <- ggplot(l0_empty, aes(x=support, y=prob)) + geom_bar(stat="identity") + scale_y_continuous(labels=percent, name="percent", limits = c(0,1))
+Here, it can clearly be seen that after "hearing" a *null* utterance ("*(...)*"), comprehenders preferentially conclude that the activity *happened* (they are not certain, but it is highly likely, given that we assume a high-*habituality* activity).
 
-grid.arrange(table, plot, ncol=2)
+Overt utterances are uniformly consistent only with the interpretation that the activity *happened*.
+
+```{r RSA plots 1, fig.height = 2, echo=FALSE}
+utterances <- c("(...)","plain","exclamation","oh yeah")
+states <- c("happened","didn't happen")
+
+results(l0_empty, "Literal Listener: \"(...)\"",states)
+results(l0_plain, "Literal Listener: \"John paid the cashier.\"",states)
+results(l0_exclamation, "Literal Listener: \"John paid the cashier!\"",states)
+results(l0_ohyeah, "Literal Listener: \"Oh yeah, and John paid the cashier.\"",states)
 ```
 
+---
+
+As expected, if the activity *happened*, speakers preferentially say nothing, and only rarely use high-effort utterances.
+
+```{r RSA plots 2, fig.height = 2, echo=FALSE}
+results(s_happened, "Speaker: Action Happened",utterances)
+results(s_didnthappen, "Speaker: Action Didn't Happen",utterances)
+```
+
+---
+
+As expected, pragmatic listeners infer that if an activity went unmentioned, it is slightly more likely (compared to baseline) to not have happened, given that the speaker has multiple viable alternatives to definitely communicate that it *did* happen.  However, they still overwhelmingly conclude that it is far more likely that the activity occurred, than that it did not.
+
+```{r RSA plots 3, fig.height = 2, echo=FALSE}
+results(l1_empty, "Pragmatic Listener: \"(...)\"",states)
+results(l1_plain, "Pragmatic Listener: \"John paid the cashier.\"",states)
+results(l1_exclamation, "Pragmatic Listener: \"John paid the cashier!\"",states)
+results(l1_ohyeah, "Pragmatic Listener: \"Oh yeah, and John paid the cashier.\"",states)
+```
+
+Overall, although this model behaves as expected, it does not tell us anything interesting, and we find out nothing about how habituality estimates might change as a result of hearing the utterance.  The slightly lowered likelihood of the activity having occurred, in the case of the "*(...)*" utterance "heard" by pragmatic listeners, does however hint at changes in *habituality* estimates, based on the utterance the speaker chose.
 
 ## hRSA
 
+A standard RSA model which incorporates joint reasoning ([Degen et al. 2015](https://cocolab.stanford.edu/papers/DegenEtAl2015-Cogsci.pdf), [Goodman & Frank 2016](https://cseweb.ucsd.edu/~gary/cs200/w17/Goodman-Frank-2016.pdf)) can model both changes in beliefs about the world, and changes in beliefs about the current activity state.  Listeners can explicitly reason about the joint likelihood of a given habituality ($h$), and a given activity state ($s$), given a particular utterance ($u$):
+
+* $P_{L_0}(s|u,h) \propto [\![u]\!] (s) \cdot P(s|h)$
+* $P_{S_1}(u|s,h) \propto \exp(\alpha (\log P_{L_0}(s|u,h)) - c(u))$
+* $P_{L_1}(s,h|u) \propto P_{S_1}(u|s,h) \cdot P(s|h) \cdot P(h)$
+
+The literal listener does not reason about activity *habituality*, as this is not a part of the literal interpretation.
+
+Here, we can feed our empirical priors directly into the model, where the likelihood of the activity occurring is conditional on the *habituality*.  Whether a given activity occurred, or not ($s$), then, is simply a Bernoulli trial with $p=h$.
+
+```{r hRSA model, echo=FALSE, cached=TRUE}
+base_model <- paste0(js.prior_typ_pred, "\n", hrsa_sourcecode)
+
+l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
+l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
+l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
+
+s_95 <- webppl(paste(base_model, "speaker(\"happened\",0.95)", sep="\n"))
+s_50 <- webppl(paste(base_model, "speaker(\"happened\",0.5)", sep="\n"))
+s_5 <- webppl(paste(base_model, "speaker(\"happened\",0.05)", sep="\n"))
+
+l1_empty <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\",\"both\")", sep="\n"))))
+l1_plain <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\",\"both\")", sep="\n"))))
+l1_exclamation <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"exclamation\",\"both\")", sep="\n"))))
+l1_ohyeah <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\"both\")", sep="\n"))))
+
+l1_empty_habit <- prob_habit(l1_empty)
+l1_plain_habit <- prob_habit(l1_plain)
+l1_exclamation_habit <- prob_habit(l1_exclamation)
+l1_ohyeah_habit <- prob_habit(l1_ohyeah)
+
+l1_empty_state <- prob_state(l1_empty)
+l1_plain_state <- prob_state(l1_plain)
+l1_exclamation_state <- prob_state(l1_exclamation)
+l1_ohyeah_state <- prob_state(l1_ohyeah)
+```
+
+```{js hRSA code, eval=FALSE, code=base_model}
+```
+
+### Results
+
+Here, one can see that the literal listener interprets highly habitual activities as having almost certainly occurred, moderately habitual activities as having perhaps occurred, and non-habitual activities as having almost certainly not occurred.
+
+```{r hRSA plots 1, fig.height = 2, echo=FALSE}
+results(l0_95,"Literal Listener: (...), 95% Habitual Activity", states)
+results(l0_50,"Literal Listener: (...), 50% Habitual Activity", states)
+results(l0_5,"Literal Listener: (...), 5% Habitual Activity", states)
+```
+
+---
+
+The pragmatic speaker is most likely to not describe a highly habitual activity explicitly, as expected, with relatively effortful utterances very unlikely.
+
+In the case of moderately habitual activities, the speaker almost always chooses to describe the activity explicitly, preferring the least effortful utterance.  To note, for moderately predictable activities, it's unclear whether it's really likely that the activity will *always* be mentioned.
+
+In the case of very unhabitual activities, the speaker most often describes the activity explicitly, again preferring the least effortful utterance.
+
+Of note here is that this model does not capture the intuition that speakers should choose more effortful utterances for particularly unhabitual activities.
+
+```{r hRSA plots 2, fig.height = 2, echo=FALSE}
+results(s_95,"Speaker: Activity Happened, 95% Habitual Activity", utterances)
+results(s_50,"Speaker: Activity Happened, 50% Habitual Activity", utterances)
+results(s_5,"Speaker: Activity Happened, 5% Habitual Activity", utterances)
+```
+
+---
+
+The pragmatic listener interprets unmentioned (high-predictability) activities as highly habitual, as expected.
+
+Explicitly mentioned activities are all interpreted as roughly equally unhabitual, contrary to predictions.
+
+```{r hRSA plots 3, fig.height = 2, echo=FALSE}
+dist_one(l1_empty_habit,"Pragmatic Listener: (...) (Habituality Only)")
+dist_one(l1_plain_habit,"Pragmatic Listener: John paid the cashier. (Habituality Only)")
+dist_one(l1_exclamation_habit,"Pragmatic Listener: John paid the cashier! (Habituality Only)")
+dist_one(l1_ohyeah_habit,"Pragmatic Listener: Oh yeah, and John paid the cashier. (Habituality Only)")
+
+results(l1_empty_state,"Pragmatic Listener: (...) (State Only)", states)
+results(l1_plain_state,"Pragmatic Listener: John paid the cashier. (State Only)", states)
+results(l1_exclamation_state,"Pragmatic Listener: John paid the cashier! (State Only)", states)
+results(l1_ohyeah_state,"Pragmatic Listener: Oh yeah, and John paid the cashier. (State Only)", states)
+
+dist_both(l1_empty,"Pragmatic Listener: (...)", states)
+dist_both(l1_plain,"Pragmatic Listener: John paid the cashier.", states)
+dist_both(l1_exclamation,"Pragmatic Listener: John paid the cashier!", states)
+dist_both(l1_ohyeah,"Pragmatic Listener: Oh yeah, and John paid the cashier.", states)
+```
+
+This model correctly captures predicted effect (a): if an activity is described explicitly, the *habituality* is likely to be low.  What it does not, however, capture is that there is no possibility of simply leveraging utterance costs to capture effects (b) and (c) above.
+
+There are three possible ways, in this model, of describing the activity explicitly: "plain," with exclamatory prosody, and with a discourse marker signifying the utterance's relevance to the discourse/listener, with the latter two more costly.  The two more attentionally prominent utterances will never be of any advantage to the literal listener, in terms of effectively communicating the current world state.  Likewise it is of no advantage to the speaker, either in terms of likelihood of accurate message transmission to the listener, or the speaker's presumed goal to conserve articulatory effort.  As a consequence, the pragmatic listener will not infer that the more effortful utterance carries any special meaning, compared to the "plain" utterance.
+
 ## Noisy channel hRSA
 
-```{r, echo=FALSE, cache=TRUE}
-base_model <- read_file("models/noisy_hrsa.webppl")
+Standard RSA models are unable to derive pragmatic inferences of different strengths, given semantically meaning-equivalent utterances, as mathematically proven in [Bergen (2016)](https://dspace.mit.edu/handle/1721.1/106430) (p. 35-37). They therefore cannot model any of the effects that increased utterance prominance may have on utterance choice or comprehension.
 
-# l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
-# l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
-# l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
-# 
-# s_95 <- webppl(paste(base_model, "speaker(\"happened\",0.95)", sep="\n"))
-# s_50 <- webppl(paste(base_model, "speaker(\"happened\",0.5)", sep="\n"))
-# s_5 <- webppl(paste(base_model, "speaker(\"happened\",0.05)", sep="\n"))
-# 
-# l1_empty <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\",\"both\")", sep="\n")))
-# l1_plain <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\",\"both\")", sep="\n")))
-# l1_exclamation <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"exclamation\",\"both\")", sep="\n")))
-# l1_ohyeah <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\"both\")", sep="\n")))
-# 
-# l1_empty_habit <- filter(l1_empty, Parameter=="habituality") %>% mutate_at("value", as.numeric)
-# l1_plain_habit <- filter(l1_plain, Parameter=="habituality") %>% mutate_at("value", as.numeric)
-# l1_exclamation_habit <- filter(l1_exclamation, Parameter=="habituality") %>% mutate_at("value", as.numeric)
-# l1_ohyeah_habit <- filter(l1_ohyeah, Parameter=="habituality") %>% mutate_at("value", as.numeric)
-# 
-# l1_empty_state <- filter(l1_empty, Parameter=="state")
-# l1_plain_state <- filter(l1_plain, Parameter=="state")
-# l1_exclamation_state <- filter(l1_exclamation, Parameter=="state")
-# l1_ohyeah_state <- filter(l1_ohyeah, Parameter=="state")
+In order to capture effects (b) and (c) above (stronger inferences for more effortful utterances; more effortful utterances for unusual meanings), it is necessary to assign some communicative benefit to the more costly utterances, in terms of grabbing attention and/or facilitating recall, already active at the literal listener level.  It is in fact plausible that comprehenders cannot accurately recall whether an activity has been explicitly mentioned, or not, as it has been shown that readers often cannot recall whether elements in a stereotyped activity sequence were explicitly mentioned ([Bower et al., 1979](https://stanford.edu/~gbower/1979/scripts_memory_text.pdf)).  Further, informational redundancy, even at the multi-word level, in part has the purpose of ensuring that listeners attend to and accurately recall relevant information ([Walker 1993](https://repository.upenn.edu/cgi/viewcontent.cgi?referer=https://www.google.de/&httpsredir=1&article=1194&context=ircs_reports), [Baker et al. 2008](http://www.aclweb.org/anthology/W08-0105))
+
+The noisy channel RSA model proposed by [Bergen & Goodman (2015)](https://cocolab.stanford.edu/papers/BergenGoodman2015-TiCS.pdf), with fairly minimal modification, successfully captures this intuition, although in this case we consider the likelihood that an utterance is attended to and stored in memory, rather than simply misheard:
+
+* $P_{L_0}(s|u_a,h) \propto [\![u_a ]\!] (s) \cdot P(s|h) \cdot \sum\limits_{u_i: [\![u_i ]\!] (s) = 1} P(u_i)P(u_a|u_i)$
+* $P_{S_1}(u_i|s,h) \propto \exp(\alpha (\sum\limits_{u_a}P(u_a|u_i)\log P_{L_0}(s|u_a,h)) - c(u_i))$
+* $P_{L_1}(s,h|u_a) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h)P(u_a|u_i)$
+
+In this model, it's assumed that every utterance has a non-trivial likelihood of not being actively attended to, and being mistaken for or mis-recalled as something akin to its "perceptual neighbors" (as well as a very small chance of being mis-recalled as a non-neighboring utterance).  The "plain" utterance is considered to be perceptually neighboring to the two more effortful utterances, which are further perceptually neighboring to each other.  The "null" utterance is relatively perceptually neighboring to the "plain" utterance, although this relationship is possibly asymmetrical, as comprehenders may be more likely to misremember highly typical activities as having been mentioned, than the other way around (this is, however, not critical for the functioning of this model).
+
+It is, however, also possible that this machinery needs to be further modified to account for the fact that these utterances are only very loosely "neighbors," and misperceiving a signal as something substantially different is somewhat less likely when talking about complex multi-word utterances.
+
+```{r noisy hRSA model, echo=FALSE, cached=TRUE}
+base_model <- paste0(js.prior_typ_pred, "\n", noisy_hrsa_sourcecode)
+
+l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
+l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
+l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
+
+s_95 <- webppl(paste(base_model, "speaker(\"happened\",0.95)", sep="\n"))
+s_50 <- webppl(paste(base_model, "speaker(\"happened\",0.5)", sep="\n"))
+s_5 <- webppl(paste(base_model, "speaker(\"happened\",0.05)", sep="\n"))
+
+l1_empty <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\",\"both\")", sep="\n"))))
+l1_plain <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\",\"both\")", sep="\n"))))
+l1_exclamation <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"exclamation\",\"both\")", sep="\n"))))
+l1_ohyeah <- prob_both(as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\"both\")", sep="\n"))))
+
+l1_empty_habit <- prob_habit(l1_empty)
+l1_plain_habit <- prob_habit(l1_plain)
+l1_exclamation_habit <- prob_habit(l1_exclamation)
+l1_ohyeah_habit <- prob_habit(l1_ohyeah)
+
+l1_empty_state <- prob_state(l1_empty)
+l1_plain_state <- prob_state(l1_plain)
+l1_exclamation_state <- prob_state(l1_exclamation)
+l1_ohyeah_state <- prob_state(l1_ohyeah)
 ```
 
 Below is the `webppl` code for this model, which can be run either on [webppl.org](https://webppl.org), or locally.
 
-```{js, eval=FALSE}
-// Is this a high-habit activity (paying the cashier when shopping) or
-// a low-habit activity (bying apples, paying cashier as habitual 
-// non-payer)?
-// (mostly for demonstration)
-var activity = ["low-habit","high-habit"]
-
-// Assume uniform likelihood / 
-var activityPrior = function() {
-  categorical([0.5, 0.5], activity)
-}
-
-// Habituality priors
-// beta distributions fit to empirical priors
-var habitualityPrior = function(activity) {
-  activity === "high-habit" ? sample(Beta({a: 2.5734459, b: 0.4543813})) :
-  activity === "low-habit" ? sample(Beta({a: 0.8507573, b: 0.9412288})) :
-  true
-}
-
-// Current activity state
-// the activity being described at this point in time either took 
-// place, or didn't
-var state = ["happened","didn't happen"]
-
-// State priors
-// whether the activity took place is dependent on prior likelihood
-var statePrior = function(habituality) {
-  flip(habituality) ? state[0] : state[1]
-}
-
-// Utterances (intended)
-// choice of 4 utterances; prosody not modeled separately as affects 
-// only one variant
-var utterance_i = ['oh yeah','exclamation','plain','(...)']
-
-// Utterance cost
-// (rough estimate of number of constituents + extra for
-// articulatory effort)
-var cost = {
-  "oh yeah": 5,
-  "exclamation": 4,
-  "plain": 3,
-  "(...)": 0
-}
-
-// Utterances (remembered/attended to)
-// assume that utterance most likely to be recalled as itself, but
-// also has non-trivial likelihood of being recalled as 'perceptually
-// neighboring' utterance (with markers for plain utterance; vice
-// versa; no utterance for "plain" utterance; and vice versa).
-// alternately, this can be conceptualized as listener's belief of
-// what the speaker *intended* to say - but unclear if below is best
-// way to represent that
-var utterance_r = function(utterance) {
-  utterance === "oh yeah" ? categorical([0.9,0.1,0.1,0.0001], utterance_i) :
-  utterance === "exclamation" ? categorical([0.1,0.9,0.1,0.0001], utterance_i) :
-  utterance === "plain" ? categorical([0.1,0.1,0.9,0.01], utterance_i) :
-  utterance === "(...)" ? categorical([0.0001,0.0001,0.1,0.9], utterance_i) :
-  true
-}
-
-// Meaning
-// literal meaning of all overt utterances is that activity happened.
-// literal meaning of null utterance is consistent with all activity states
-var meaning = function(utt,state) {
-  utt === "oh yeah" ? state === "happened" : 
-  utt === "exclamation" ? state === "happened" : 
-  utt === "plain" ? state === "happened" : 
-  utt === "(...)" ? true :
-  true
-}
-
-// Speaker optimality
-var alpha = 20
-
-// Utterance prior
-// utterance prior determined by utterance cost, as defined above
-var utterancePrior = function() {
-  var uttProbs = map(function(u) {return Math.exp(-cost[u]) }, utterance_i)
-  return categorical(uttProbs, utterance_i)
-}
-
-// Literal listener
-var literalListener = mem(function(utterance, habituality) {
-  return Infer({model: function() {
-    var state = statePrior(habituality)
-    var remembered = utterance_r(utterance)
-    condition(meaning(remembered,state))
-    return state
-  }})
-})
-
-// Speaker
-var speaker = mem(function(state, habituality) {
-  return Infer({model: function() {
-    var utterance = utterancePrior()
-    var remembered = utterance_r(utterance)
-    factor(alpha * literalListener(remembered, habituality).score(state))
-    return utterance
-  }})
-})
-
-// Pragmatic listener
-// second argument determines whether function returns state,
-// habituality, or both
-var pragmaticListener = function(utterance, info) {
-  return Infer({method: "rejection", samples: 2500, model: function() {
-    var activity = "high-habit"
-    var habituality = habitualityPrior(activity)
-    var state = statePrior(habituality)
-    var remembered = utterance_r(utterance)
-    observe(speaker(state, habituality),remembered)
-    info === "both" ? {state: state, habituality: habituality} :
-    info === "state" ? state :
-    info === "habituality" ? habituality :
-    true
-  }})
-}
-
-literalListener("(...)",0.95)
-literalListener("(...)",0.5)
-literalListener("(...)",0.05)
-
-speaker("happened",0.95)
-speaker("happened",0.5)
-speaker("happened",0.05)
-
-pragmaticListener("(...)","both")
-pragmaticListener("plain","both")
-pragmaticListener("exclamation","both")
-pragmaticListener("oh yeah","both")
+```{js noisy hRSA code, eval=FALSE, code=base_model}
 ```
 
+Below are the results of this model:
+
+### Results
+
+The literal listener, as expected, perceives highly typical activities as having most likely happened, and so forth.  As can be seen below, the are slightly more biased towards assuming that the activity occurred than that it did not, given the *habituality* of the activity.  This is due to a relatively elevated likelihood that an utterance will be remembered as having been mentioned - it is unclear right now if this is justified, or whether the model will need to be altered.
+
+```{r noisy hRSA plots 1, fig.height = 2, echo=FALSE}
+results(l0_95,"Literal Listener: (...), 95% Habitual Activity", states)
+results(l0_50,"Literal Listener: (...), 50% Habitual Activity", states)
+results(l0_5,"Literal Listener: (...), 5% Habitual Activity", states)
+```
+
+----
+
+For high-habituality activites, as before, speakers are very unlikely to describe the activity explicitly - and if they do, they tend towards less effortful utterances.
+
+Moderately habitual activities are only moderately likely to be mentioned, and again speakers gravitate towards less effortful utterances.  This is consistent with expectations, as moderately predictable activities are less likely to be assumed to have not occurred - it is therefore not quite as important to grab the listener's attention to ensure that they do, in fact, believe that the activity took place.
+
+Non-habitual activities are virtually always described explicitly, and as can be seen, speakers prefer a higher-effort utterance that is less likely to not be attended to, or be misrecalled as a "null" utterance.  This matches our predicted effect (c).
+
+```{r noisy hRSA plots 2, fig.height = 2, echo=FALSE}
+results(s_95,"Speaker: Activity Happened, 95% Habitual Activity", utterances)
+results(s_50,"Speaker: Activity Happened, 50% Habitual Activity", utterances)
+results(s_5,"Speaker: Activity Happened, 5% Habitual Activity", utterances)
+```
+
+----
+
+As can be seen here, pragmatic listeners perceive activities described overtly as less habitual, and furthermore, perceive the higher-effort utterances as (slightly) less habitual than the lower-effort utterance, matching the predicted effect (a).
+
+Further, the lowest-effort "plain" utterance is slightly likely to be remembered as not having been uttered, with a very small chance of the same for higher-effort utterances.
+
+```{r noisy hRSA plots 3, fig.height = 2, echo=FALSE}
+dist_one(l1_empty_habit,"Pragmatic Listener: (...) (Habituality Only)")
+dist_one(l1_plain_habit,"Pragmatic Listener: John paid the cashier. (Habituality Only)")
+dist_one(l1_exclamation_habit,"Pragmatic Listener: John paid the cashier! (Habituality Only)")
+dist_one(l1_ohyeah_habit,"Pragmatic Listener: Oh yeah, and John paid the cashier. (Habituality Only)")
+
+results(l1_empty_state,"Pragmatic Listener: (...) (State Only)", states)
+results(l1_plain_state,"Pragmatic Listener: John paid the cashier. (State Only)", states)
+results(l1_exclamation_state,"Pragmatic Listener: John paid the cashier! (State Only)", states)
+results(l1_ohyeah_state,"Pragmatic Listener: Oh yeah, and John paid the cashier. (State Only)", states)
+
+dist_both(l1_empty,"Pragmatic Listener: (...)", states)
+dist_both(l1_plain,"Pragmatic Listener: John paid the cashier.", states)
+dist_both(l1_exclamation,"Pragmatic Listener: John paid the cashier!", states)
+dist_both(l1_ohyeah,"Pragmatic Listener: Oh yeah, and John paid the cashier.", states)
+```
+
+Overall, this model qualitatively captures all of our predicted (including two of our empirically validated) effects, using machinery that has been established in RSA models of other pragmatic phenomena.
 
 ## Comparison to empirical results
+
+Overall, the results of the final model are a fairly close match to those empirically measured in our experiments.  To demonstrate this, I will plot the primary results of interest side-by-side.  Currently I use the "*typical-predictable*" prior as a comparison for the "null" utterance, but this measure will likely be replaced by a measure of activity habituality estimates collected after an utterance that mentions shopping, but does not talk about the activity in question.
+
+```{r empirical results, fig.height = 10, echo=FALSE}
+data_empty <- tibble(rating = prior_typ_pred$rating/100)
+data_plain <- (filter(posterior_typ_pred, experiment=="period") %>% dplyr::select(rating))/100
+data_exclamation <- (filter(posterior_typ_pred, experiment=="exclamation") %>% dplyr::select(rating))/100
+data_ohyeah <- (filter(posterior_typ_pred, experiment=="ohyeah") %>% dplyr::select(rating))/100
+
+# l1_empty_habit
+# l1_plain_habit
+# l1_exclamation_habit
+# l1_ohyeah_habit
+
+empirical <- nrow(data_empty) + nrow(posterior_typ_pred)
+predicted <- nrow(l1_empty_habit)*4
+
+type <- c(rep("empirical",nrow(data_empty)), rep("predicted",nrow(l1_empty_habit)), rep("empirical",nrow(data_plain)), rep("predicted",nrow(l1_plain_habit)), rep("empirical",nrow(data_exclamation)), rep("predicted",nrow(l1_exclamation_habit)), rep("empirical",nrow(data_ohyeah)), rep("predicted",nrow(l1_ohyeah_habit)))
+
+experiment <- c(rep("(...)",nrow(data_empty)+nrow(l1_empty_habit)), rep("John paid the cashier.",nrow(data_plain)+nrow(l1_plain_habit)), rep("John paid the cashier!",nrow(data_exclamation)+nrow(l1_exclamation_habit)), rep("Oh yeah, and John paid the cashier.",nrow(data_ohyeah)+nrow(l1_ohyeah_habit)))
+
+comparison <- tibble(type = type, experiment = experiment, habituality = c(data_empty$rating, l1_empty_habit$habituality,data_plain$rating,l1_plain_habit$habituality,data_exclamation$rating,l1_exclamation_habit$habituality,data_ohyeah$rating,l1_ohyeah_habit$habituality)) %>% mutate_if(is.character, as.factor)
+
+comparison$experiment <- factor(comparison$experiment, levels=c("(...)","John paid the cashier.","John paid the cashier!","Oh yeah, and John paid the cashier."))
+
+ggplot(comparison, aes(x=habituality)) + geom_density() + facet_grid(experiment ~ type)
+```
+
+At this time, it is likely, however, that model machinery may be altered, or parameters may need adjusted.  Currently, this model stands as proof of concept that it is possible to generate these inferences, and to generate stronger inferences for more effortful utterances, using established RSA machinery.
