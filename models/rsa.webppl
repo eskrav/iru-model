@@ -5,7 +5,7 @@ var state = ["happened","didn't happen"]
 
 // State priors
 // assume highly predictable/habitual activity
-// with a 90% chance of occurring
+// with a 90% chance of occurring, for purpose of demonstration
 var statePrior = function() {
   categorical([0.9, 0.1], state) 
 }
@@ -27,7 +27,7 @@ var cost = {
 
 // Meaning
 // literal meaning of all overt utterances is that activity happened.
-// literal meaning of null utterance is consistent with all activity states
+// literal meaning of null "utterance" is consistent with all activity states
 var meaning = function(utt,state) {
   utt === "oh yeah" ? state === "happened" : 
   utt === "exclamation" ? state === "happened" : 
@@ -37,7 +37,7 @@ var meaning = function(utt,state) {
 }
 
 // Speaker optimality
-var alpha = 15
+var alpha = 20
 
 // Utterance prior
 // utterance prior determined by utterance cost, as defined above

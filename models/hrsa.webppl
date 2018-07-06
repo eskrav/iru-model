@@ -3,7 +3,7 @@
 // (mostly for demonstration)
 var activity = ["low-habit","high-habit"]
 
-// Assume uniform likelihood / 
+// Assume uniform likelihood
 var activityPrior = function() {
   categorical([0.5, 0.5], activity)
 }
@@ -26,7 +26,7 @@ var statePrior = function(habituality) {
   flip(habituality) ? state[0] : state[1]
 }
 
-// Utterances (intended)
+// Utterances
 // choice of 4 utterances; prosody not modeled separately as affects only one variant
 var utterance = ['oh yeah','exclamation','plain','(...)']
 
@@ -41,7 +41,7 @@ var cost = {
 
 // Meaning
 // literal meaning of all overt utterances is that activity happened.
-// literal meaning of null utterance is consistent with all activity states
+// literal meaning of null "utterance" is consistent with all activity states
 var meaning = function(utt,state) {
   utt === "oh yeah" ? state === "happened" : 
   utt === "exclamation" ? state === "happened" : 
@@ -51,7 +51,7 @@ var meaning = function(utt,state) {
 }
 
 // Speaker optimality
-var alpha = 15
+var alpha = 20
 
 // Utterance prior
 // utterance prior determined by utterance cost, as defined above
