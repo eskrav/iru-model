@@ -12,8 +12,6 @@ forcats
 MASS
 survival
 fitdistrplus
-bindrcpp
 gridExtra
 scales
-lattice
-jsonlite
+bindrcpp

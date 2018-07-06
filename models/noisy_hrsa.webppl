@@ -46,7 +46,7 @@ var cost = {
 // utterance; and vice versa).
 // alternately, this can be conceptualized as listener's belief of what the speaker
 // *intended* to say - but unclear if below is best way to represent that
-var utterance_a = function(utterance) {
+var utterance_r = function(utterance) {
   utterance === "oh yeah" ? categorical([0.9,0.05,0.1,0.0001], utterance_i) :
   utterance === "exclamation" ? categorical([0.05,0.9,0.1,0.0001], utterance_i) :
   utterance === "plain" ? categorical([0.1,0.1,0.9,0.05], utterance_i) :
@@ -79,7 +79,7 @@ var utterancePrior = function() {
 var literalListener = mem(function(utterance, habituality) {
   return Infer({model: function() {
     var state = statePrior(habituality)
-    var recalled = utterance_a(utterance)
+    var recalled = utterance_r(utterance)
     condition(meaning(recalled,state))
     return state
   }})
@@ -89,7 +89,7 @@ var literalListener = mem(function(utterance, habituality) {
 var speaker = mem(function(state, habituality) {
   return Infer({model: function() {
     var utterance = utterancePrior()
-    var recalled = utterance_a(utterance)
+    var recalled = utterance_r(utterance)
     factor(alpha * literalListener(recalled, habituality).score(state))
     return utterance
   }})
@@ -102,7 +102,7 @@ var pragmaticListener = function(utterance, info) {
     var activity = "high-habit"
     var habituality = habitualityPrior(activity)
     var state = statePrior(habituality)
-    var recalled = utterance_a(utterance)
+    var recalled = utterance_r(utterance)
     observe(speaker(state, habituality),recalled)
     info === "both" ? {state: state, habituality: habituality} :
     info === "state" ? state :
