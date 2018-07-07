@@ -338,7 +338,7 @@ There are three possible ways, in this model, of describing an activity explicit
 **Current activity state:** $s$ (did the activity occur)  
 **Habituality:** $h$ (the likelihood of the activity occurring)  
 
-Standard RSA models are unable to derive pragmatic inferences of different strengths, given semantically meaning-equivalent utterances, as mathematically proven by @BergenLevy2016. Simply assigning different costs to identically meaningful utterances, for instance, will not allow one to capture the intuitive effects of increased effort, or likelihood of accurate message transmission, on utterance choice or listener comprehension.  Standard RSA models therefore cannot model the effect that increased utterance prominence may have on utterance choice or comprehension.
+Standard RSA models are unable to derive pragmatic inferences of different types or strengths, given semantically meaning-equivalent utterances, as mathematically proven by @BergenLevy2016. Simply assigning different costs to identically meaningful utterances, for instance, will not allow one to capture the intuitive effects of increased effort, or likelihood of accurate message transmission, on utterance choice or listener comprehension.  Standard RSA models therefore cannot model the effect that increased utterance prominence may have on utterance choice or comprehension.
 
 In order to capture effects (b) and (c) above (stronger inferences for more effortful utterances; more effortful utterances for unusual meanings), it is necessary to assign some communicative benefit to the more costly utterances, in terms of grabbing attention and/or facilitating recall, already active at the literal listener level.  It is in fact plausible that comprehenders cannot accurately recall whether an activity has been explicitly mentioned, or not, as it has been shown that readers often cannot recall whether or not elements in a stereotyped activity sequence were explicitly mentioned [@Bower1979].  Further, informational redundancy, even at the multi-word level, in part has the purpose of ensuring that listeners attend to and accurately recall relevant information, implying that neither is guaranteed [@Walker1993;@Baker2008].
 
@@ -467,7 +467,7 @@ comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habitu
 ```
 
 
-The distributions tails in the empirical data are fatter, and there is a hint of bimodality around the 50% mark.  Otherwise, qualitatively the *habituality* densities match up fairly well, and the mean habitualities are qualitatively and numerically similar.
+The distributions tails in the empirical data are fatter, and there is a hint of bimodality around the 50% mark.  Otherwise, qualitatively the *habituality* densities match up reasonably well, and the mean habitualities are qualitatively and numerically similar.
 
 At this time it is likely, however, that model machinery will need to be altered, or parameters adjusted.  Currently, this model stands primarily as proof of concept that it is possible to generate these inferences, and to generate stronger inferences for more effortful utterances, using established RSA machinery.
 
