@@ -5,7 +5,6 @@ output:
     self_contained: false
     toc: true
     toc_float: true
-    keep_md: true
 link-citations: true
 bibliography: bibliography.bib
 csl: apa.csl
