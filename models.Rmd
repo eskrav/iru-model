@@ -5,7 +5,7 @@ output:
     self_contained: false
     toc: true
     toc_float: true
-    toc_depth: 4
+    keep_md: true
 link-citations: true
 bibliography: bibliography.bib
 csl: apa.csl
@@ -239,7 +239,7 @@ Overall, although this model behaves as expected, it does not tell us anything i
 
 **Utterance:** $u$ (the particular utterance)  
 **Current activity state:** $s$ (did the activity occur)  
-**Habituality:** $h$ (the likelihood of the activity occuring at any particular instance, in the context of the script it belongs to)  
+**Habituality:** $h$ (the likelihood of the activity occurring at any particular instance, in the context of the script it belongs to)  
 
 A standard RSA model which incorporates joint reasoning [e.g., @Degen2015;@Goodman2016] can model both changes in beliefs about the world, and changes in beliefs about the current activity state.  Listeners can explicitly reason about the joint likelihood of a given habituality ($h$), and a given activity state ($s$), given a particular utterance ($u$):
 
@@ -293,7 +293,7 @@ results(l0_5,"Literal Listener: \"(...)\", 5% Habitual Activity", states)
 
 ---
 
-The **speaker** is most likely not to describe a highly habitual activity explicitly, as expected, and to particularly disprefer relatively effortful utterancesy.
+The **speaker** is most likely not to describe a highly habitual activity explicitly, as expected, and to particularly disprefer relatively effortful utterances.
 
 In the case of moderately habitual activities, the speaker is far more likely to describe the activity explicitly, preferring the least effortful overt utterance.  To note, for moderately predictable activities, it's unclear how frequently we should really expect for the activity be mentioned overtly.
 
@@ -335,9 +335,9 @@ There are three possible ways, in this model, of describing an activity explicit
 ## Noisy channel hRSA
 
 **Utterance (Intended):** $u_i$ (the particular utterance uttered by the speaker)  
-**Utterance (Recalled):** $u_r$ (the utterace that the listener actually recalls)  
+**Utterance (Recalled):** $u_r$ (the utterance that the listener actually recalls)  
 **Current activity state:** $s$ (did the activity occur)  
-**Habituality:** $h$ (the likelihood of the activity occuring)  
+**Habituality:** $h$ (the likelihood of the activity occurring)  
 
 Standard RSA models are unable to derive pragmatic inferences of different strengths, given semantically meaning-equivalent utterances, as mathematically proven by @BergenLevy2016. Simply assigning different costs to identically meaningful utterances, for instance, will not allow one to capture the intuitive effects of increased effort, or likelihood of accurate message transmission, on utterance choice or listener comprehension.  Standard RSA models therefore cannot model the effect that increased utterance prominence may have on utterance choice or comprehension.
 
@@ -397,7 +397,7 @@ results(l0_5,"Literal Listener: \"(...)\", 5% Habitual Activity", states)
 
 ----
 
-For high-habituality activites, as before, speakers are very unlikely to describe the activity explicitly - and if they do, they tend towards less effortful utterances.
+For high-habituality activities, as before, speakers are very unlikely to describe the activity explicitly - and if they do, they tend towards less effortful utterances.
 
 Moderately habitual activities are only moderately likely to be mentioned, and again speakers gravitate towards less effortful utterances.  This is consistent with expectations, as moderately predictable activities are less likely to be assumed to have not occurred - it is therefore not quite as important to grab the listener's attention to ensure that they do, in fact, understand that the activity took place.
 
