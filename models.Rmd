@@ -1,6 +1,11 @@
 ---
 title: "Modeling pragmatic inferences triggered by informational redundancy"
-output: html_document
+output: 
+  html_document:
+    self_contained: false
+    toc: true
+    toc_float: true
+    toc_depth: 4
 link-citations: true
 bibliography: bibliography.bib
 csl: apa.csl
@@ -77,9 +82,9 @@ prob_both <- function(result) {
 
 Research on pragmatic inference has to date paid relatively little attention to the effects of pragmatic reasoning on common ground beliefs, or background world knowledge, although revision of said beliefs is a strategy that listeners may use to interpret pragmatically unexpected utterances.  Here we present a Rational Speech Act (RSA) model [@Frank2012;@Goodman2013] of how background beliefs about activity *habituality* may be updated upon encountering informationally redundant descriptions of said activities.  Intuitively, one expects that upon hearing something like "*John went shopping. He paid the cashier!*", a comprehender may conclude that because paying the cashier during shopping is an entirely expected activity which doesn't typically warrant mention, *John* must not be a habitual cashier-payer.
 
-Additionally, we address an issue that arises when pragmatic reasoning is partially dependent on the possibility that a message may have been misheard or not attended to.  Longer or otherwise more prominent utterances should have a better chance of being accurately perceived or attended to than less prominent, but semantically meaning-equivalent utterances [@Wilson2004], which may either generate or strengthen pragmatic inferences in response to those utterances (at the very least, if an utterance is not attended to, it will not generate an inference).  @Bergen2015 and @Bergen2016 demonstrate that the standard RSA model is unable to generate different inferences, or inferences of different strengths, for utterances with the same semantic meaning.  Similar to these authors, we build a model which incorporates the notion that more prominent utterances should have a better chance of being attended to (and/or recalled accurately), and should therefore generate stronger inferences.
+Additionally, we address an issue that arises when pragmatic reasoning is partially dependent on the possibility that a message may have been misheard or not attended to.  Longer or otherwise more prominent utterances should have a better chance of being accurately perceived or attended to than less prominent, but semantically meaning-equivalent utterances [@Wilson2004], which may either generate or strengthen pragmatic inferences in response to those utterances (at the very least, if an utterance is not attended to, it will likely not generate an inference).  @Bergen2015 and @BergenLevy2016 demonstrate that the standard RSA model is unable to generate different inferences, or inferences of different strengths, for utterances with the same semantic meaning.  Similar to these authors, we build a model which incorporates the notion that more prominent utterances should have a better chance of being attended to (and/or recalled accurately), and should therefore generate stronger inferences.
 
-### Data
+## Data and priors
 
 Here, we consider utterances such as the following:
 
@@ -117,7 +122,7 @@ On this page, I will only look at "typical world - predictable activity" activit
 
 It is important to note, however, that an activity rated (for example) at 50%, on a *never* to *always* scale, is not necessarily one that participants believe occurs 50% of the time.  These should therefore be considered only as rough relative estimates of activity habituality.
 
-#### Typical Context - Predictable Activity
+#### Typical context - predictable activity
 
 **Context: **"*John often goes to the grocery store around the corner from his apartment.*"  
 **Question: **"*How often do you think John usually pays the cashier, when grocery shopping?*"
@@ -139,7 +144,7 @@ plot(fit.prior_typ_pred)
 js.prior_typ_pred <- paste0("var beta_high_a = ",fit.prior_typ_pred$estimate[1],"\n","var beta_high_b = ",fit.prior_typ_pred$estimate[2],"\n","var beta_low_a =  0.59051473988806 // estimate from wonky context - predictable activity","\n","var beta_low_b =  0.599422405762914 // estimate from wonky context - predictable activity","\n")
 ```
 
-## General Model Setup
+## General setup
 
 **Possible Utterances:** (in roughly increasing order of effort)
 
@@ -334,7 +339,7 @@ There are three possible ways, in this model, of describing an activity explicit
 **Current activity state:** $s$ (did the activity occur)  
 **Habituality:** $h$ (the likelihood of the activity occuring)  
 
-Standard RSA models are unable to derive pragmatic inferences of different strengths, given semantically meaning-equivalent utterances, as mathematically proven by @Bergen2016 [p. 35-37]. Simply assigning different costs to identically meaningful utterances, for instance, will not allow one to capture the intuitive effects of increased effort, or likelihood of accurate message transmission, on utterance choice or listener comprehension.  Standard RSA models therefore cannot model the effect that increased utterance prominence may have on utterance choice or comprehension.
+Standard RSA models are unable to derive pragmatic inferences of different strengths, given semantically meaning-equivalent utterances, as mathematically proven by @BergenLevy2016. Simply assigning different costs to identically meaningful utterances, for instance, will not allow one to capture the intuitive effects of increased effort, or likelihood of accurate message transmission, on utterance choice or listener comprehension.  Standard RSA models therefore cannot model the effect that increased utterance prominence may have on utterance choice or comprehension.
 
 In order to capture effects (b) and (c) above (stronger inferences for more effortful utterances; more effortful utterances for unusual meanings), it is necessary to assign some communicative benefit to the more costly utterances, in terms of grabbing attention and/or facilitating recall, already active at the literal listener level.  It is in fact plausible that comprehenders cannot accurately recall whether an activity has been explicitly mentioned, or not, as it has been shown that readers often cannot recall whether or not elements in a stereotyped activity sequence were explicitly mentioned [@Bower1979].  Further, informational redundancy, even at the multi-word level, in part has the purpose of ensuring that listeners attend to and accurately recall relevant information, implying that neither is guaranteed [@Walker1993;@Baker2008].
 
