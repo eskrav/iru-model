@@ -5,6 +5,10 @@ output:
     self_contained: false
     toc: true
     toc_float: true
+    pandoc_args: --mathjax
+  # github_document:
+  #   toc: true
+  #   pandoc_args: --webtex
 link-citations: true
 bibliography: bibliography.bib
 csl: apa.csl
