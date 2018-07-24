@@ -89,7 +89,7 @@ This page demonstrates the performance of the noisy channel hRSA with lower-*hab
 
 ## Empirical priors
 
-#### Wonky context - habitual activity
+### Wonky context - habitual activity
 
 **Context: **"*John is typically broke, and doesn't usually pay when he goes to the grocery store.*"  
 **Question: **"*How often do you think John usually pays the cashier, when grocery shopping?*"
@@ -120,7 +120,7 @@ plot(fit.prior_wonk_pred)
 js.prior_pred <- paste0("var beta_high_a = 2.19602561493963","\n","var beta_high_b = 0.410857186535822","\n","var beta_low_a = ",fit.prior_wonk_pred$estimate[1],"\n","var beta_low_b = ",fit.prior_wonk_pred$estimate[2],"\n")
 ```
 
-#### Typical context - non-habitual activity
+### Typical context - non-habitual activity
 
 **Context: **"*John often goes to the grocery store around the corner from his apartment.*"  
 **Question: **"*How often do you think John usually gets apples, when grocery shopping?*"
@@ -145,7 +145,7 @@ summary(fit.prior_typ_unpred)
 plot(fit.prior_typ_unpred)
 ```
 
-#### Wonky context - non-habitual activity
+### Wonky context - non-habitual activity
 
 **Context: **"*John is typically broke, and doesn't usually pay when he goes to the grocery store.*"  
 **Question: **"*How often do you think John usually gets apples, when grocery shopping?*"
@@ -173,7 +173,7 @@ plot(fit.prior_wonk_unpred)
 js.prior_pred_nonhab <- paste0("var beta_high_a = ",fit.prior_typ_unpred$estimate[1],"\n","var beta_high_b = ",fit.prior_typ_unpred$estimate[1],"\n","var beta_low_a = ",fit.prior_wonk_unpred$estimate[1],"\n","var beta_low_b = ",fit.prior_wonk_unpred$estimate[2],"\n")
 ```
 
-## Wonky habitual: "John went shopping. He paid the cashier!"
+## Wonky habitual (non-payer): "He paid the cashier!"
 
 ```{r wonky noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred, "\nvar world_type = \"wonky\"\n", noisy_hrsa_sourcecode)
@@ -201,22 +201,6 @@ l1_plain_state <- prob_state(l1_plain)
 l1_exclamation_state <- prob_state(l1_exclamation)
 l1_ohyeah_state <- prob_state(l1_ohyeah)
 ```
-
-```{r wonky noisy hRSA plots 1, fig.height = 2, echo=FALSE}
-results(l0_95,"Literal Listener: \"(...)\", 95% Habitual Activity", states)
-results(l0_50,"Literal Listener: \"(...)\", 50% Habitual Activity", states)
-results(l0_5,"Literal Listener: \"(...)\", 5% Habitual Activity", states)
-```
-
-----
-
-```{r wonky noisy hRSA plots 2, fig.height = 2, echo=FALSE}
-results(s_95,"Speaker: Activity Happened, 95% Habitual Activity", utterances)
-results(s_50,"Speaker: Activity Happened, 50% Habitual Activity", utterances)
-results(s_5,"Speaker: Activity Happened, 5% Habitual Activity", utterances)
-```
-
-----
 
 ```{r wonky noisy hRSA plots 3, fig.height = 2, echo=FALSE}
 utterances <- c("(...)","plain","exclamation","oh yeah")
@@ -269,7 +253,7 @@ ggplot(comparison, aes(x=habituality)) + geom_density(fill="#E69F00") + facet_gr
 comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habituality)) %>% ggplot(aes(x=type, y=habituality, fill=type)) + geom_bar(stat="identity") + facet_grid(. ~ experiment) + scale_y_continuous(labels = percent_format(), limits = c(0,1)) + scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) + ggtitle("Empirical vs. Predicted Habituality Means")
 ```
 
-## Ordinary non-habitual: "John went shopping. He got some apples!"
+## Ordinary non-habitual (presumed payer): "He got some apples!"
 
 ```{r ordinary nonhab noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred_nonhab, "\nvar world_type = \"ordinary\"\n", nonhab_noisy_hrsa_sourcecode)
@@ -298,21 +282,6 @@ l1_exclamation_state <- prob_state(l1_exclamation)
 l1_ohyeah_state <- prob_state(l1_ohyeah)
 ```
 
-```{r ordinary nonhab noisy hRSA plots 1, fig.height = 2, echo=FALSE}
-results(l0_95,"Literal Listener: \"(...)\", 95% Habitual Activity", states)
-results(l0_50,"Literal Listener: \"(...)\", 50% Habitual Activity", states)
-results(l0_5,"Literal Listener: \"(...)\", 5% Habitual Activity", states)
-```
-
-----
-
-```{r ordinary nonhab noisy hRSA plots 2, fig.height = 2, echo=FALSE}
-results(s_95,"Speaker: Activity Happened, 95% Habitual Activity", utterances)
-results(s_50,"Speaker: Activity Happened, 50% Habitual Activity", utterances)
-results(s_5,"Speaker: Activity Happened, 5% Habitual Activity", utterances)
-```
-
-----
 
 ```{r ordinary nonhab noisy hRSA plots 3, fig.height = 2, echo=FALSE}
 dist_one(l1_empty_habit,"Pragmatic Listener: \"(...)\" (`habituality` only)")
@@ -363,7 +332,7 @@ comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habitu
 ```
 
 
-## Wonky non-habitual: "John went shopping. He got some apples!"
+## Wonky non-habitual (non-payer): "He got some apples!"
 
 ```{r wonky nonhab noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred_nonhab, "\nvar world_type = \"wonky\"\n", nonhab_noisy_hrsa_sourcecode)
@@ -391,22 +360,6 @@ l1_plain_state <- prob_state(l1_plain)
 l1_exclamation_state <- prob_state(l1_exclamation)
 l1_ohyeah_state <- prob_state(l1_ohyeah)
 ```
-
-```{r wonky nonhab noisy hRSA plots 1, fig.height = 2, echo=FALSE}
-results(l0_95,"Literal Listener: \"(...)\", 95% Habitual Activity", states)
-results(l0_50,"Literal Listener: \"(...)\", 50% Habitual Activity", states)
-results(l0_5,"Literal Listener: \"(...)\", 5% Habitual Activity", states)
-```
-
-----
-
-```{r wonky nonhab noisy hRSA plots 2, fig.height = 2, echo=FALSE}
-results(s_95,"Speaker: Activity Happened, 95% Habitual Activity", utterances)
-results(s_50,"Speaker: Activity Happened, 50% Habitual Activity", utterances)
-results(s_5,"Speaker: Activity Happened, 5% Habitual Activity", utterances)
-```
-
-----
 
 ```{r wonky nonhab noisy hRSA plots 3, fig.height = 2, echo=FALSE}
 dist_one(l1_empty_habit,"Pragmatic Listener: \"(...)\" (`habituality` only)")
