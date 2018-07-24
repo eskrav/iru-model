@@ -173,7 +173,7 @@ plot(fit.prior_wonk_unpred)
 js.prior_pred_nonhab <- paste0("var beta_high_a = ",fit.prior_typ_unpred$estimate[1],"\n","var beta_high_b = ",fit.prior_typ_unpred$estimate[1],"\n","var beta_low_a = ",fit.prior_wonk_unpred$estimate[1],"\n","var beta_low_b = ",fit.prior_wonk_unpred$estimate[2],"\n")
 ```
 
-## Wonky habitual (non-payer): "He paid the cashier!"
+## Wonky context - habitual
 
 ```{r wonky noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred, "\nvar world_type = \"wonky\"\n", noisy_hrsa_sourcecode)
@@ -253,7 +253,7 @@ ggplot(comparison, aes(x=habituality)) + geom_density(fill="#E69F00") + facet_gr
 comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habituality)) %>% ggplot(aes(x=type, y=habituality, fill=type)) + geom_bar(stat="identity") + facet_grid(. ~ experiment) + scale_y_continuous(labels = percent_format(), limits = c(0,1)) + scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) + ggtitle("Empirical vs. Predicted Habituality Means")
 ```
 
-## Ordinary non-habitual (presumed payer): "He got some apples!"
+## Ordinary context - non-habitual
 
 ```{r ordinary nonhab noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred_nonhab, "\nvar world_type = \"ordinary\"\n", nonhab_noisy_hrsa_sourcecode)
@@ -332,7 +332,7 @@ comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habitu
 ```
 
 
-## Wonky non-habitual (non-payer): "He got some apples!"
+## Wonky context - non-habitual
 
 ```{r wonky nonhab noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred_nonhab, "\nvar world_type = \"wonky\"\n", nonhab_noisy_hrsa_sourcecode)
