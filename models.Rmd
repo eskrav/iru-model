@@ -183,7 +183,7 @@ The baseline RSA model is inherently unequipped to model changes in beliefs abou
 
 * $P_{L_0}(s|u) \propto [\![u]\!] (s) \cdot P(s)$
 * $P_{S_1}(u|s;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u))$
-* $P_{L_1}(s|u) \propto P_{S_1}(u|s) \cdot P(s)$
+* $P_{L_1}(s|u) \propto P_{S_1}(u|s;\alpha,C) \cdot P(s)$
 
 Given that the literal meaning of *paid the cashier* ($[\![u]\!]$) does not communicate anything about activity *habituality* directly, the standard RSA model can predict only that the *cashier* was definitely paid in the case of utterances (1-3), and that they may or may not have been paid in the case of utterance (4).  Activity habituality by itself cannot be reasoned about in the standard RSA model, since all utterances are at face value equally consistent with all possible *habitualities*.
 
@@ -259,7 +259,7 @@ A standard RSA model which incorporates joint reasoning [e.g., @Degen2015;@Goodm
 
 * $P_{L_0}(s|u,h) \propto [\![u]\!] (s) \cdot P(s|h)$
 * $P_{S_1}(u|s,h;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u,h))$
-* $P_{L_1}(s,h|u) \propto P_{S_1}(u|s,h) \cdot P(s|h) \cdot P(h)$
+* $P_{L_1}(s,h|u) \propto P_{S_1}(u|s,h;\alpha,C) \cdot P(s|h) \cdot P(h)$
 
 The literal listener does not reason about activity *habituality*, as this is not a part of the literal interpretation.
 
@@ -363,7 +363,7 @@ The noisy channel RSA model proposed by @Bergen2015, with fairly minimal modific
 
 * $P_{L_0}(s|u_r,h) \propto [\![u_r ]\!] (s) \cdot P(s|h) \cdot \sum\limits_{u_i: [\![u_i ]\!] (s) = 1} P(u_i)P(u_r|u_i)$
 * $P_{S_1}(u_i|s,h;\alpha,C) \propto P(u;C)\exp(\alpha \sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h))$
-* $P_{L_1}(s,h|u_r) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h)P(u_r|u_i)$
+* $P_{L_1}(s,h|u_r) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h;\alpha,C)P(u_r|u_i)$
 
 In this model, it's assumed that every utterance has a non-trivial likelihood of not being actively attended to, and being mistaken for or mis-recalled as something akin to its "perceptual neighbors" (as well as a very small chance of being mis-recalled as a non-neighboring utterance).  The "plain" utterance is considered to be perceptually neighboring to the two more effortful utterances, which are further moderately perceptually neighboring to each other.  The "null" utterance is relatively perceptually neighboring to the "plain" utterance, although this relationship is possibly asymmetrical, as comprehenders may be more likely to misremember highly typical activities as having been mentioned, than the other way around (this is, however, not critical for the functioning of this model).
 
