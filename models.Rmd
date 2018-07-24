@@ -86,6 +86,8 @@ Research on pragmatic inference has to date paid relatively little attention to 
 
 Additionally, we address an issue that arises when pragmatic reasoning is partially dependent on the possibility that a message may have been misheard or not attended to.  Longer or otherwise more prominent utterances should have a better chance of being accurately perceived or attended to than less prominent, but semantically meaning-equivalent utterances [@Wilson2004], which may either generate or strengthen pragmatic inferences in response to those utterances (at the very least, if an utterance is not attended to, it will likely not generate an inference).  @Bergen2015 and @BergenLevy2016 demonstrate that the standard RSA model is unable to generate different inferences, or inferences of different strengths, for utterances with the same semantic meaning.  Similar to these authors, we build a model which incorporates the notion that more prominent utterances should have a better chance of being attended to (and/or recalled accurately), and should therefore generate stronger inferences.
 
+Only informationally redundant utterances are modeled on this page.  For models of non-redundant utterances, see [here](./models.unpredictable.html).
+
 ## Data and priors
 
 Here, we consider utterances such as the following:
