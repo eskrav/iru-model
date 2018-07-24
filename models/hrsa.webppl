@@ -1,18 +1,18 @@
-// Is this a high-habit activity (paying the cashier when shopping) or a
-// low-habit activity (bying apples, paying cashier as habitual non-payer)?
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
 // (mostly for demonstration)
-var activity = ["low-habit","high-habit"]
+var world = ["wonky","ordinary"]
 
 // Assume uniform likelihood
-var activityPrior = function() {
-  categorical([0.5, 0.5], activity)
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
 }
 
 // Habituality priors
 // beta distributions fit to empirical priors
-var habitualityPrior = function(activity) {
-  activity === "high-habit" ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
-  activity === "low-habit" ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+var habitualityPrior = function(world) {
+  world === "ordinary" ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === "wonky" ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
   true
 }
 
@@ -79,11 +79,11 @@ var speaker = mem(function(state, habituality) {
 })
 
 // Pragmatic listener
-// assume high-habit activity for demonstration
+// assume high-habit world for demonstration
 var pragmaticListener = function(utterance, info) {
-  return Infer({method: "rejection", samples: 5000, model: function() {
-    var activity = "high-habit"
-    var habituality = habitualityPrior(activity)
+  return Infer({method: "MCMC", samples: 50000, model: function() {
+    var world = "ordinary"
+    var habituality = habitualityPrior(world)
     var state = statePrior(habituality)
     observe(speaker(state, habituality),utterance)
     info === "both" ? {state: state, habituality: habituality} :

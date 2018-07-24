@@ -237,7 +237,7 @@ div.tocify {
 <li>“<em>John went shopping. He paid the cashier.</em>”</li>
 <li>“<em>John went shopping.</em>”</li>
 </ol>
-<p>In (1-3), stating that “John”&quot; <em>paid the cashier</em> is informationally redundant, as cashier-paying is in context a very predictable activity, which should automatically be assumed simply given the mention of <em>shopping</em> <span class="citation">(Bower, Black, &amp; Turner, <a href="#ref-Bower1979">1979</a>)</span>. The predicted, and, in the case of (a) and (b), empirically validated <span class="citation">(Kravtchenko &amp; Demberg, <a href="#ref-Kravtchenko2015">2015</a>, <span class="citeproc-no-output"><strong>???</strong></span>)</span> effects associated with the use and comprehension of such utterances are:</p>
+<p>In (1-3), stating that “John”&quot; <em>paid the cashier</em> is informationally redundant, as cashier-paying is in context a very predictable activity, which should automatically be assumed simply given the mention of <em>shopping</em> <span class="citation">(Bower, Black, &amp; Turner, <a href="#ref-Bower1979">1979</a>)</span>. The predicted, and, in the case of (a) and (b), empirically validated <span class="citation">(Kravtchenko &amp; Demberg, <a href="#ref-Kravtchenko2015">2015</a>, <a href="#ref-Kravtchenko2018">2018</a>)</span> effects associated with the use and comprehension of such utterances are:</p>
 <ol style="list-style-type: lower-alpha">
 <li>As the utterance <em>paid the cashier</em> above is informationally redundant, at face value it is pragmatically odd. Comprehenders resolve the pragmatic anomaly in part by determining that cashier-paying is <em>not</em>, in fact, typical for this individual and in this context, contrary to their prior beliefs.</li>
 <li>Expending more effort on communicating an informationally redundant utterance, for example by using exclamatory prosody, should strengthen the inference, as increased articulatory effort (and increased attempts at attention-grabbing) reflect greater speaker intent to transmit precisely this message to the listener.</li>
@@ -262,11 +262,12 @@ div.tocify {
 <p>On this page, and a separate page to be posted, I plot the distributions of ratings that we collected from participants, and fit beta (probability) distributions to each condition. These plots show how likely any particular activity <em>habituality</em> is: since we don’t know precisely how <em>habitual</em> any given activity is (or is believed to be), we have the following ranges of estimates collected from our participants.</p>
 <p>On this page, I will only look at “typical world - predictable activity” activities - i.e., where an overt activity description is informationally redundant. I will look at activities which are not predictable, either by virtue of linguistic context or prior belief, on a separate page.</p>
 <p>It is important to note, however, that an activity rated (for example) at 50%, on a <em>never</em> to <em>always</em> scale, is not necessarily one that participants believe occurs 50% of the time. These should therefore be considered only as rough relative estimates of activity habituality.</p>
-<div id="typical-context---predictable-activity" class="section level4">
-<h4>Typical context - predictable activity</h4>
+<div id="typical-context---habitual-activity" class="section level4">
+<h4>Typical context - habitual activity</h4>
 <p><strong>Context: </strong>“<em>John often goes to the grocery store around the corner from his apartment.</em>”<br />
 <strong>Question: </strong>“<em>How often do you think John usually pays the cashier, when grocery shopping?</em>”</p>
 <p>Here, it is evident that the vast majority of comprehenders believe that <em>John</em> is a typical cashier-payer.</p>
+<p><img src="models_files/figure-html/typ%20pred%20plot-1.png" width="672" /></p>
 <pre class="r"><code># scale to remove 0 and 1 values (add/subtract 0.001 from edges)
 prior_typ_pred_scaled &lt;- scale_ratings(prior_typ_pred$rating)
 
@@ -312,10 +313,11 @@ fit.prior_typ_pred &lt;- fitdist(prior_typ_pred_scaled, &quot;beta&quot;, method
 <p>The baseline RSA model is inherently unequipped to model changes in beliefs about the world that are independent of the current activity state (<span class="math inline">\(s\)</span>):</p>
 <ul>
 <li><span class="math inline">\(P_{L_0}(s|u) \propto [\![u]\!] (s) \cdot P(s)\)</span></li>
-<li><span class="math inline">\(P_{S_1}(u|s) \propto \exp(\alpha (\log P_{L_0}(s|u)) - c(u))\)</span></li>
+<li><span class="math inline">\(P_{S_1}(u|s;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u))\)</span></li>
 <li><span class="math inline">\(P_{L_1}(s|u) \propto P_{S_1}(u|s) \cdot P(s)\)</span></li>
 </ul>
 <p>Given that the literal meaning of <em>paid the cashier</em> (<span class="math inline">\([\![u]\!]\)</span>) does not communicate anything about activity <em>habituality</em> directly, the standard RSA model can predict only that the <em>cashier</em> was definitely paid in the case of utterances (1-3), and that they may or may not have been paid in the case of utterance (4). Activity habituality by itself cannot be reasoned about in the standard RSA model, since all utterances are at face value equally consistent with all possible <em>habitualities</em>.</p>
+<p>To note, <span class="math inline">\(\alpha\)</span> here does not change the effect of utterance costs <a href="https://michael-franke.github.io/probLang/chapters/app-03-costs.html">(see here)</a>, by design, as speaker optimality with respect to minimizing utterance costs and maximizing utterance informativity are conceptually distinct. The specific optimality parameters will likely be revised in the future.</p>
 <p>Below is the <code>webppl</code> code for this model, which can be run either on <a href="https://webppl.org">webppl.org</a>, or locally.</p>
 <pre class="js"><code>// Current activity state
 // the activity being described at this point in time either took 
@@ -426,31 +428,34 @@ var pragmaticListener = function(utterance) {
 <p>A standard RSA model which incorporates joint reasoning <span class="citation">(e.g., Degen, Tessler, &amp; Goodman, <a href="#ref-Degen2015">2015</a>; Goodman &amp; Frank, <a href="#ref-Goodman2016">2016</a>)</span> can model both changes in beliefs about the world, and changes in beliefs about the current activity state. Listeners can explicitly reason about the joint likelihood of a given habituality (<span class="math inline">\(h\)</span>), and a given activity state (<span class="math inline">\(s\)</span>), given a particular utterance (<span class="math inline">\(u\)</span>):</p>
 <ul>
 <li><span class="math inline">\(P_{L_0}(s|u,h) \propto [\![u]\!] (s) \cdot P(s|h)\)</span></li>
-<li><span class="math inline">\(P_{S_1}(u|s,h) \propto \exp(\alpha (\log P_{L_0}(s|u,h)) - c(u))\)</span></li>
+<li><span class="math inline">\(P_{S_1}(u|s,h;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u,h))\)</span></li>
 <li><span class="math inline">\(P_{L_1}(s,h|u) \propto P_{S_1}(u|s,h) \cdot P(s|h) \cdot P(h)\)</span></li>
 </ul>
 <p>The literal listener does not reason about activity <em>habituality</em>, as this is not a part of the literal interpretation.</p>
 <p>Here, we can feed our empirical priors directly into the model, where the likelihood of the activity occurring is conditional on the <em>habituality</em>. Whether a given activity occurred, or not (<span class="math inline">\(s\)</span>), then, is simply a Bernoulli trial with <span class="math inline">\(p=h\)</span>.</p>
+<p>As noted previously, <span class="math inline">\(\alpha\)</span> here does not change the effect of utterance costs <a href="https://michael-franke.github.io/probLang/chapters/app-03-costs.html">(see here for more info)</a>.</p>
 <pre class="js"><code>var beta_high_a = 2.19602561493963
 var beta_high_b = 0.410857186535822
-var beta_low_a =  0.59051473988806 // estimate from wonky context - predictable activity
-var beta_low_b =  0.599422405762914 // estimate from wonky context - predictable activity
+var beta_low_a = 0.59051473988806
+var beta_low_b = 0.599422405762914
 
-// Is this a high-habit activity (paying the cashier when shopping) or a
-// low-habit activity (bying apples, paying cashier as habitual non-payer)?
+var world_type = &quot;ordinary&quot;
+
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
 // (mostly for demonstration)
-var activity = [&quot;low-habit&quot;,&quot;high-habit&quot;]
+var world = [&quot;wonky&quot;,&quot;ordinary&quot;]
 
 // Assume uniform likelihood
-var activityPrior = function() {
-  categorical([0.5, 0.5], activity)
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
 }
 
 // Habituality priors
 // beta distributions fit to empirical priors
-var habitualityPrior = function(activity) {
-  activity === &quot;high-habit&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
-  activity === &quot;low-habit&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+var habitualityPrior = function(world) {
+  world === &quot;ordinary&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === &quot;wonky&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
   true
 }
 
@@ -517,11 +522,11 @@ var speaker = mem(function(state, habituality) {
 })
 
 // Pragmatic listener
-// assume high-habit activity for demonstration
+// assume high-habit world for demonstration
 var pragmaticListener = function(utterance, info) {
-  return Infer({method: &quot;rejection&quot;, samples: 5000, model: function() {
-    var activity = &quot;high-habit&quot;
-    var habituality = habitualityPrior(activity)
+  return Infer({method: &quot;MCMC&quot;, samples: 50000, model: function() {
+    var world = &quot;ordinary&quot;
+    var habituality = habitualityPrior(world)
     var state = statePrior(habituality)
     observe(speaker(state, habituality),utterance)
     info === &quot;both&quot; ? {state: state, habituality: habituality} :
@@ -572,32 +577,35 @@ var pragmaticListener = function(utterance, info) {
 <p>The noisy channel RSA model proposed by <span class="citation">Bergen &amp; Goodman (<a href="#ref-Bergen2015">2015</a>)</span>, with fairly minimal modification, successfully captures this intuition, although in this case we consider the likelihood that an utterance is attended to and stored in memory, rather than simply misheard:</p>
 <ul>
 <li><span class="math inline">\(P_{L_0}(s|u_r,h) \propto [\![u_r ]\!] (s) \cdot P(s|h) \cdot \sum\limits_{u_i: [\![u_i ]\!] (s) = 1} P(u_i)P(u_r|u_i)\)</span></li>
-<li><span class="math inline">\(P_{S_1}(u_i|s,h) \propto \exp(\alpha (\sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h)) - c(u_i))\)</span></li>
+<li><span class="math inline">\(P_{S_1}(u_i|s,h;\alpha,C) \propto P(u;C)\exp(\alpha \sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h))\)</span></li>
 <li><span class="math inline">\(P_{L_1}(s,h|u_r) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h)P(u_r|u_i)\)</span></li>
 </ul>
 <p>In this model, it’s assumed that every utterance has a non-trivial likelihood of not being actively attended to, and being mistaken for or mis-recalled as something akin to its “perceptual neighbors” (as well as a very small chance of being mis-recalled as a non-neighboring utterance). The “plain” utterance is considered to be perceptually neighboring to the two more effortful utterances, which are further moderately perceptually neighboring to each other. The “null” utterance is relatively perceptually neighboring to the “plain” utterance, although this relationship is possibly asymmetrical, as comprehenders may be more likely to misremember highly typical activities as having been mentioned, than the other way around (this is, however, not critical for the functioning of this model).</p>
 <p>It is, however, also possible that this machinery needs to be further modified to account for the fact that these utterances are only very loosely “neighbors,” and misperceiving a signal as something substantially different than what it is is somewhat less likely when talking about complex multi-word utterances.</p>
+<p>As noted above, <span class="math inline">\(\alpha\)</span> here does not change the effect of utterance costs <a href="https://michael-franke.github.io/probLang/chapters/app-03-costs.html">(see here for more info)</a>.</p>
 <p>Below is the <code>webppl</code> code for this model, which can be run either on <a href="https://webppl.org">webppl.org</a>, or locally.</p>
 <pre class="js"><code>var beta_high_a = 2.19602561493963
 var beta_high_b = 0.410857186535822
-var beta_low_a =  0.59051473988806 // estimate from wonky context - predictable activity
-var beta_low_b =  0.599422405762914 // estimate from wonky context - predictable activity
+var beta_low_a = 0.59051473988806
+var beta_low_b = 0.599422405762914
 
-// Is this a high-habit activity (paying the cashier when shopping) or a
-// low-habit activity (bying apples, paying cashier as habitual non-payer)?
+var world_type = &quot;ordinary&quot;
+
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
 // (mostly for demonstration)
-var activity = [&quot;low-habit&quot;,&quot;high-habit&quot;]
+var world = [&quot;wonky&quot;,&quot;ordinary&quot;]
 
 // Assume uniform likelihood
-var activityPrior = function() {
-  categorical([0.5, 0.5], activity)
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
 }
 
 // Habituality priors
 // beta distributions fit to empirical priors
-var habitualityPrior = function(activity) {
-  activity === &quot;high-habit&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
-  activity === &quot;low-habit&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+var habitualityPrior = function(world) {
+  world === &quot;ordinary&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === &quot;wonky&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
   true
 }
 
@@ -681,11 +689,11 @@ var speaker = mem(function(state, habituality) {
 })
 
 // Pragmatic listener
-// assume high-habit activity for demonstration
+// assume particular world for demonstration
 var pragmaticListener = function(utterance, info) {
-  return Infer({method: &quot;rejection&quot;, samples: 5000, model: function() {
-    var activity = &quot;high-habit&quot;
-    var habituality = habitualityPrior(activity)
+  return Infer({method: &quot;MCMC&quot;, samples: 50000, model: function() {
+    var world = world_type
+    var habituality = habitualityPrior(world)
     var state = statePrior(habituality)
     var recalled = utterance_r(utterance)
     observe(speaker(state, habituality),recalled)
@@ -762,7 +770,7 @@ var pragmaticListener = function(utterance, info) {
 <p>Kravtchenko, E., &amp; Demberg, V. (2015). Semantically underinformative utterances trigger pragmatic inferences. In <em>CogSci</em> (pp. 1207–1212). Retrieved from <a href="https://mindmodeling.org/cogsci2015/papers/0213/paper0213.pdf" class="uri">https://mindmodeling.org/cogsci2015/papers/0213/paper0213.pdf</a></p>
 </div>
 <div id="ref-Kravtchenko2018">
-<p>Kravtchenko, E., &amp; Demberg, V. (n.d.). Informationally redundant utterances alter prior beliefs about event typicality. In preparation.</p>
+<p>Kravtchenko, E., &amp; Demberg, V. (2018). Informationally redundant utterances alter prior beliefs about event typicality. In preparation.</p>
 </div>
 <div id="ref-Walker1993">
 <p>Walker, M. A. (1993). <em>Informational redundancy and resource bounds in dialogue</em>. Doctoral Dissertation, University of Pennsylvania, Philadelphia, PA.</p>

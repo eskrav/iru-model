@@ -6,9 +6,6 @@ output:
     toc: true
     toc_float: true
     pandoc_args: --mathjax
-  # github_document:
-  #   toc: true
-  #   pandoc_args: --webtex
 link-citations: true
 bibliography: bibliography.bib
 csl: apa.csl
@@ -41,6 +38,8 @@ posterior_wonk_unpred <- posterior_ratings %>% filter(world=="wonky" & activity=
 
 posterior_typ_pred_empty <- data %>% filter(condition=="after" & Qtype == "predictable" & world == "typical" & activity=="unpredictable")
 
+posterior_wonk_pred_empty <- data %>% filter(condition=="after" & Qtype == "predictable" & world == "wonky" & activity=="unpredictable")
+
 rsa_sourcecode <- paste(readLines("models/rsa.webppl"), collapse="\n")
 hrsa_sourcecode <- paste(readLines("models/hrsa.webppl"), collapse="\n")
 noisy_hrsa_sourcecode <- paste(readLines("models/noisy_hrsa.webppl"), collapse="\n")
@@ -52,12 +51,12 @@ scale_ratings <- function(rating) {
 }
 
 dist_one <- function(result,title) {
-  ggplot(result, aes(x=habituality)) + geom_density(fill="#E69F00") + ylim(0,12) + ggtitle(title)
+  ggplot(result, aes(x=habituality)) + geom_density(fill="#E69F00") + ylim(0,15) + ggtitle(title)
 }
 
 dist_both <- function(result,title,levels) {
   result$state <- factor(result$state, levels=levels)
-  ggplot(result, aes(x=habituality, fill=state)) + geom_density(alpha=0.5) + scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9"), drop=FALSE) + ylim(0,25) + ggtitle(title)
+  ggplot(result, aes(x=habituality, fill=state)) + geom_density(alpha=0.5) + scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9"), drop=FALSE) + ylim(0,32.5) + ggtitle(title)
 }
 
 results <- function(result, title, levels) {
@@ -125,12 +124,21 @@ On this page, I will only look at "typical world - predictable activity" activit
 
 It is important to note, however, that an activity rated (for example) at 50%, on a *never* to *always* scale, is not necessarily one that participants believe occurs 50% of the time.  These should therefore be considered only as rough relative estimates of activity habituality.
 
-#### Typical context - predictable activity
+#### Typical context - habitual activity
 
 **Context: **"*John often goes to the grocery store around the corner from his apartment.*"  
 **Question: **"*How often do you think John usually pays the cashier, when grocery shopping?*"
 
 Here, it is evident that the vast majority of comprehenders believe that *John* is a typical cashier-payer.
+
+```{r typ pred plot, echo=FALSE, fig.height=4}
+# Histogram with density plot
+ggplot(prior_typ_pred, aes(x=rating)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white", bins=50) +
+  geom_density(alpha=.2, fill="#FF6666") +
+  geom_vline(aes(xintercept=mean(rating)), color="black", linetype="dashed", size=1)
+```
+
 
 ```{r typ pred fit}
 # scale to remove 0 and 1 values (add/subtract 0.001 from edges)
@@ -143,8 +151,7 @@ fit.prior_typ_pred <- fitdist(prior_typ_pred_scaled, "beta", method="mle")
 summary(fit.prior_typ_pred)
 plot(fit.prior_typ_pred)
 
-
-js.prior_typ_pred <- paste0("var beta_high_a = ",fit.prior_typ_pred$estimate[1],"\n","var beta_high_b = ",fit.prior_typ_pred$estimate[2],"\n","var beta_low_a =  0.59051473988806 // estimate from wonky context - predictable activity","\n","var beta_low_b =  0.599422405762914 // estimate from wonky context - predictable activity","\n")
+js.prior_pred <- paste0("var beta_high_a = ",fit.prior_typ_pred$estimate[1],"\n","var beta_high_b = ",fit.prior_typ_pred$estimate[2],"\n","var beta_low_a = 0.59051473988806","\n","var beta_low_b = 0.599422405762914","\n")
 ```
 
 ## General setup
@@ -173,13 +180,15 @@ js.prior_typ_pred <- paste0("var beta_high_a = ",fit.prior_typ_pred$estimate[1],
 The baseline RSA model is inherently unequipped to model changes in beliefs about the world that are independent of the current activity state ($s$):
 
 * $P_{L_0}(s|u) \propto [\![u]\!] (s) \cdot P(s)$
-* $P_{S_1}(u|s) \propto \exp(\alpha (\log P_{L_0}(s|u)) - c(u))$
+* $P_{S_1}(u|s;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u))$
 * $P_{L_1}(s|u) \propto P_{S_1}(u|s) \cdot P(s)$
 
 Given that the literal meaning of *paid the cashier* ($[\![u]\!]$) does not communicate anything about activity *habituality* directly, the standard RSA model can predict only that the *cashier* was definitely paid in the case of utterances (1-3), and that they may or may not have been paid in the case of utterance (4).  Activity habituality by itself cannot be reasoned about in the standard RSA model, since all utterances are at face value equally consistent with all possible *habitualities*.
 
+To note, $\alpha$ here does not change the effect of utterance costs [(see here)](https://michael-franke.github.io/probLang/chapters/app-03-costs.html), by design, as speaker optimality with respect to minimizing utterance costs and maximizing utterance informativity are conceptually distinct.  The specific optimality parameters will likely be revised in the future.
+
 ```{r RSA model, echo=FALSE, cache=TRUE}
-base_model <- paste(js.prior_typ_pred, "\n", rsa_sourcecode, sep="\n")
+base_model <- paste(js.prior_pred, "\n", rsa_sourcecode, sep="\n")
 
 l0_empty <- as_tibble(webppl(paste(base_model, "literalListener(\"(...)\")", sep="\n")))
 l0_plain <- as_tibble(webppl(paste(base_model, "literalListener(\"plain\")", sep="\n")))
@@ -247,15 +256,17 @@ Overall, although this model behaves as expected, it does not tell us anything i
 A standard RSA model which incorporates joint reasoning [e.g., @Degen2015;@Goodman2016] can model both changes in beliefs about the world, and changes in beliefs about the current activity state.  Listeners can explicitly reason about the joint likelihood of a given habituality ($h$), and a given activity state ($s$), given a particular utterance ($u$):
 
 * $P_{L_0}(s|u,h) \propto [\![u]\!] (s) \cdot P(s|h)$
-* $P_{S_1}(u|s,h) \propto \exp(\alpha (\log P_{L_0}(s|u,h)) - c(u))$
+* $P_{S_1}(u|s,h;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u,h))$
 * $P_{L_1}(s,h|u) \propto P_{S_1}(u|s,h) \cdot P(s|h) \cdot P(h)$
 
 The literal listener does not reason about activity *habituality*, as this is not a part of the literal interpretation.
 
 Here, we can feed our empirical priors directly into the model, where the likelihood of the activity occurring is conditional on the *habituality*.  Whether a given activity occurred, or not ($s$), then, is simply a Bernoulli trial with $p=h$.
 
+As noted previously, $\alpha$ here does not change the effect of utterance costs [(see here for more info)](https://michael-franke.github.io/probLang/chapters/app-03-costs.html).
+
 ```{r hRSA model, echo=FALSE, cache=TRUE}
-base_model <- paste0(js.prior_typ_pred, "\n", hrsa_sourcecode)
+base_model <- paste0(js.prior_pred, "\nvar world_type = \"ordinary\"\n\n", hrsa_sourcecode)
 
 l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
 l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
@@ -349,15 +360,17 @@ In order to capture effects (b) and (c) above (stronger inferences for more effo
 The noisy channel RSA model proposed by @Bergen2015, with fairly minimal modification, successfully captures this intuition, although in this case we consider the likelihood that an utterance is attended to and stored in memory, rather than simply misheard:
 
 * $P_{L_0}(s|u_r,h) \propto [\![u_r ]\!] (s) \cdot P(s|h) \cdot \sum\limits_{u_i: [\![u_i ]\!] (s) = 1} P(u_i)P(u_r|u_i)$
-* $P_{S_1}(u_i|s,h) \propto \exp(\alpha (\sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h)) - c(u_i))$
+* $P_{S_1}(u_i|s,h;\alpha,C) \propto P(u;C)\exp(\alpha \sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h))$
 * $P_{L_1}(s,h|u_r) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h)P(u_r|u_i)$
 
 In this model, it's assumed that every utterance has a non-trivial likelihood of not being actively attended to, and being mistaken for or mis-recalled as something akin to its "perceptual neighbors" (as well as a very small chance of being mis-recalled as a non-neighboring utterance).  The "plain" utterance is considered to be perceptually neighboring to the two more effortful utterances, which are further moderately perceptually neighboring to each other.  The "null" utterance is relatively perceptually neighboring to the "plain" utterance, although this relationship is possibly asymmetrical, as comprehenders may be more likely to misremember highly typical activities as having been mentioned, than the other way around (this is, however, not critical for the functioning of this model).
 
 It is, however, also possible that this machinery needs to be further modified to account for the fact that these utterances are only very loosely "neighbors," and misperceiving a signal as something substantially different than what it is is somewhat less likely when talking about complex multi-word utterances.
 
+As noted above, $\alpha$ here does not change the effect of utterance costs [(see here for more info)](https://michael-franke.github.io/probLang/chapters/app-03-costs.html).
+
 ```{r noisy hRSA model, echo=FALSE, cache=TRUE}
-base_model <- paste0(js.prior_typ_pred, "\n", noisy_hrsa_sourcecode)
+base_model <- paste0(js.prior_pred, "\nvar world_type = \"ordinary\"\n\n", noisy_hrsa_sourcecode)
 
 l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
 l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
