@@ -185,7 +185,7 @@ The baseline RSA model is inherently unequipped to model changes in beliefs abou
 
 Given that the literal meaning of *paid the cashier* ($[\![u]\!]$) does not communicate anything about activity *habituality* directly, the standard RSA model can predict only that the *cashier* was definitely paid in the case of utterances (1-3), and that they may or may not have been paid in the case of utterance (4).  Activity habituality by itself cannot be reasoned about in the standard RSA model, since all utterances are at face value equally consistent with all possible *habitualities*.
 
-To note, $\alpha$ here does not change the effect of utterance costs [(see here)](https://michael-franke.github.io/probLang/chapters/app-03-costs.html), by design, as speaker optimality with respect to minimizing utterance costs and maximizing utterance informativity are conceptually distinct.  The specific optimality parameters will likely be revised in the future.
+To note, $\alpha$ here does not change the effect of utterance costs ([see here](https://michael-franke.github.io/probLang/chapters/app-03-costs.html)), by design, as speaker optimality with respect to minimizing utterance costs and maximizing utterance informativity are conceptually distinct.  The specific optimality parameters will likely be revised in the future.
 
 ```{r RSA model, echo=FALSE, cache=TRUE}
 base_model <- paste(js.prior_pred, "\n", rsa_sourcecode, sep="\n")
@@ -263,7 +263,7 @@ The literal listener does not reason about activity *habituality*, as this is no
 
 Here, we can feed our empirical priors directly into the model, where the likelihood of the activity occurring is conditional on the *habituality*.  Whether a given activity occurred, or not ($s$), then, is simply a Bernoulli trial with $p=h$.
 
-As noted previously, $\alpha$ here does not change the effect of utterance costs [(see here for more info)](https://michael-franke.github.io/probLang/chapters/app-03-costs.html).
+As noted previously, $\alpha$ here does not change the effect of utterance costs ([see here for more info](https://michael-franke.github.io/probLang/chapters/app-03-costs.html)).
 
 ```{r hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred, "\nvar world_type = \"ordinary\"\n\n", hrsa_sourcecode)
@@ -367,7 +367,7 @@ In this model, it's assumed that every utterance has a non-trivial likelihood of
 
 It is, however, also possible that this machinery needs to be further modified to account for the fact that these utterances are only very loosely "neighbors," and misperceiving a signal as something substantially different than what it is is somewhat less likely when talking about complex multi-word utterances.
 
-As noted above, $\alpha$ here does not change the effect of utterance costs [(see here for more info)](https://michael-franke.github.io/probLang/chapters/app-03-costs.html).
+As noted above, $\alpha$ here does not change the effect of utterance costs ([see here for more info](https://michael-franke.github.io/probLang/chapters/app-03-costs.html)).
 
 ```{r noisy hRSA model, echo=FALSE, cache=TRUE}
 base_model <- paste0(js.prior_pred, "\nvar world_type = \"ordinary\"\n\n", noisy_hrsa_sourcecode)
