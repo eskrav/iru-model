@@ -1,0 +1,135 @@
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
+// (mostly for demonstration)
+var world = ["wonky","ordinary"]
+
+// Assume uniform likelihood
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(world) {
+  world === "ordinary" ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === "wonky" ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took place, or didn't
+var state = ["happened","didn't happen"]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances (intended)
+// choice of 4 utterances; prosody not modeled separately as affects only one variant
+var utterance = ['oh yeah','exclamation','plain','(...)']
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for articulatory effort)
+var cost = {
+  "oh yeah": 5,
+  "exclamation": 4,
+  "plain": 3,
+  "(...)": 0
+}
+
+// Utterances (recalled/attended to)
+// assume that utterance most likely to be recalled as itself, but also has
+// non-trivial likelihood of being recalled as 'neighboring' utterance
+// (with markers for plain utterance; vice versa; no utterance for "plain"
+// utterance; and vice versa).
+// alternately, this can be conceptualized as listener's belief of what the speaker
+// *intended* to say - but unclear if below is best way to represent that
+var utterance_r = function(u_i) {
+  u_i === "oh yeah" ? categorical([0.9,0.05,0.1,0.0001], utterance) :
+  u_i === "exclamation" ? categorical([0.05,0.9,0.1,0.0001], utterance) :
+  u_i === "plain" ? categorical([0.1,0.1,0.9,0.05], utterance) :
+  u_i === "(...)" ? categorical([0.0001,0.0001,0.01,0.9], utterance) :
+  true
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null "utterance" is consistent with all activity states
+var meaning = function(utterance,state) {
+  utterance === "oh yeah" ? state === "happened" : 
+  utterance === "exclamation" ? state === "happened" : 
+  utterance === "plain" ? state === "happened" : 
+  utterance === "(...)" ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 20
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Utterance posterior P(u_r | u_i)
+var utterancePosterior = mem(function(u_r) {
+  Infer({model: function() {
+    var u_i = utterancePrior()
+    condition(u_r == utterance_r(u_i))
+    return u_i
+  }})
+})
+
+// Literal listener
+var literalListener = mem(function(u_r, habituality) {
+  return Infer({model: function() {
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    condition(meaning(u_i,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality) {
+  return Infer({model: function() {
+    var u_i = utterancePrior()
+    var u_r = utterance_r(u_i)
+    factor(alpha * literalListener(u_r, habituality).score(state))
+    return u_i
+  }})
+})
+
+// Pragmatic listener
+// assume particular world for demonstration
+var pragmaticListener = function(u_r, info) {
+  return Infer({method: "MCMC", samples: 50000, model: function() {
+    var world = world_type
+    var habituality = habitualityPrior(world)
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    observe(speaker(state, habituality),u_i)
+    info === "both" ? {state: state, habituality: habituality} :
+    info === "state" ? state :
+    info === "habituality" ? habituality :
+    true
+  }})
+}
+
+
+// literalListener("(...)",0.95)
+// literalListener("(...)",0.5)
+// literalListener("(...)",0.05)
+
+// speaker("happened",0.95)
+// speaker("happened",0.5)
+// speaker("happened",0.05)
+
+// pragmaticListener("(...)","both")
+// pragmaticListener("plain","both")
+// pragmaticListener("exclamation","both")
+// pragmaticListener("oh yeah","both")

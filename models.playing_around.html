@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Modeling pragmatic inferences triggered by informational redundancy: Model changes</title>
+
+<script src="models.playing_around_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="models.playing_around_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="models.playing_around_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="models.playing_around_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="models.playing_around_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="models.playing_around_files/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="models.playing_around_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="models.playing_around_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="models.playing_around_files/navigation-1.1/tabsets.js"></script>
+<link href="models.playing_around_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="models.playing_around_files/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Modeling pragmatic inferences triggered by informational redundancy: Model changes</h1>
+
+</div>
+
+
+<div id="formulas-fixed-add-utterance-posterior" class="section level2">
+<h2>Formulas fixed; add utterance posterior</h2>
+<ul>
+<li><span class="math inline">\(P_{L_0}(s|u_r,h) \propto P(s|h) \cdot \sum\limits_{u_i: [\![u_i ]\!] (s) = 1} P(u_r|u_i)P(u_i)\)</span></li>
+<li><span class="math inline">\(P_{S_1}(u_i|s,h;\alpha,C) \propto P(u_i;C)\exp(\alpha \sum\limits_{u_r}P(u_r|u_i)\log P_{L_0}(s|u_r,h))\)</span></li>
+<li><span class="math inline">\(P_{L_1}(s,h|u_r) \propto P(s|h) \cdot P(h) \cdot \sum\limits_{u_i}P_{S_1}(u_i|s,h;\alpha,C)P(u_r|u_i)P(u_i)\)</span></li>
+</ul>
+<pre class="js"><code>var beta_high_a = 2.19602561493963
+var beta_high_b = 0.410857186535822
+var beta_low_a = 0.59051473988806
+var beta_low_b = 0.599422405762914
+
+var world_type = &quot;ordinary&quot;
+
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
+// (mostly for demonstration)
+var world = [&quot;wonky&quot;,&quot;ordinary&quot;]
+
+// Assume uniform likelihood
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(world) {
+  world === &quot;ordinary&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === &quot;wonky&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took place, or didn&#39;t
+var state = [&quot;happened&quot;,&quot;didn&#39;t happen&quot;]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances (intended)
+// choice of 4 utterances; prosody not modeled separately as affects only one variant
+var utterance = [&#39;oh yeah&#39;,&#39;exclamation&#39;,&#39;plain&#39;,&#39;(...)&#39;]
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for articulatory effort)
+var cost = {
+  &quot;oh yeah&quot;: 5,
+  &quot;exclamation&quot;: 4,
+  &quot;plain&quot;: 3,
+  &quot;(...)&quot;: 0
+}
+
+// Utterances (recalled/attended to)
+// assume that utterance most likely to be recalled as itself, but also has
+// non-trivial likelihood of being recalled as &#39;neighboring&#39; utterance
+// (with markers for plain utterance; vice versa; no utterance for &quot;plain&quot;
+// utterance; and vice versa).
+// alternately, this can be conceptualized as listener&#39;s belief of what the speaker
+// *intended* to say - but unclear if below is best way to represent that
+var utterance_r = function(u_i) {
+  u_i === &quot;oh yeah&quot; ? categorical([0.9,0.05,0.1,0.0001], utterance) :
+  u_i === &quot;exclamation&quot; ? categorical([0.05,0.9,0.1,0.0001], utterance) :
+  u_i === &quot;plain&quot; ? categorical([0.1,0.1,0.9,0.05], utterance) :
+  u_i === &quot;(...)&quot; ? categorical([0.0001,0.0001,0.01,0.9], utterance) :
+  true
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null &quot;utterance&quot; is consistent with all activity states
+var meaning = function(utterance,state) {
+  utterance === &quot;oh yeah&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;exclamation&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;plain&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;(...)&quot; ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 20
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Utterance posterior P(u_r | u_i)
+var utterancePosterior = mem(function(u_r) {
+  Infer({model: function() {
+    var u_i = utterancePrior()
+    condition(u_r == utterance_r(u_i))
+    return u_i
+  }})
+})
+
+// Literal listener
+var literalListener = mem(function(u_r, habituality) {
+  return Infer({model: function() {
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    condition(meaning(u_i,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality) {
+  return Infer({model: function() {
+    var u_i = utterancePrior()
+    var u_r = utterance_r(u_i)
+    factor(alpha * literalListener(u_r, habituality).score(state))
+    return u_i
+  }})
+})
+
+// Pragmatic listener
+// assume particular world for demonstration
+var pragmaticListener = function(u_r, info) {
+  return Infer({method: &quot;MCMC&quot;, samples: 50000, model: function() {
+    var world = world_type
+    var habituality = habitualityPrior(world)
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    observe(speaker(state, habituality),u_i)
+    info === &quot;both&quot; ? {state: state, habituality: habituality} :
+    info === &quot;state&quot; ? state :
+    info === &quot;habituality&quot; ? habituality :
+    true
+  }})
+}
+
+
+// literalListener(&quot;(...)&quot;,0.95)
+// literalListener(&quot;(...)&quot;,0.5)
+// literalListener(&quot;(...)&quot;,0.05)
+
+// speaker(&quot;happened&quot;,0.95)
+// speaker(&quot;happened&quot;,0.5)
+// speaker(&quot;happened&quot;,0.05)
+
+// pragmaticListener(&quot;(...)&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;plain&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;exclamation&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;oh yeah&quot;,&quot;both&quot;)</code></pre>
+<div id="results" class="section level3">
+<h3>Results</h3>
+<div id="literal-listener" class="section level4">
+<h4>Literal listener</h4>
+<p><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%201-1.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%201-2.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%201-3.png" width="672" /></p>
+</div>
+<div id="speaker" class="section level4">
+<h4>Speaker</h4>
+<p><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%202-1.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%202-2.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%202-3.png" width="672" /></p>
+</div>
+<div id="pragmatic-listener" class="section level4">
+<h4>Pragmatic listener</h4>
+<p><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-1.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-2.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-3.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-4.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-5.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-6.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-7.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-8.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-9.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-10.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-11.png" width="672" /><img src="models.playing_around_files/figure-html/noisy%20hRSA%20plots%203-12.png" width="672" /></p>
+</div>
+</div>
+<div id="comparison-to-empirical-results" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.playing_around_files/figure-html/empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.playing_around_files/figure-html/empirical%20results%202-1.png" width="672" /></p>
+</div>
+</div>
+<div id="cant-be-misremembered" class="section level2">
+<h2>“(…)” can’t be misremembered</h2>
+<pre class="js"><code>var beta_high_a = 2.19602561493963
+var beta_high_b = 0.410857186535822
+var beta_low_a = 0.59051473988806
+var beta_low_b = 0.599422405762914
+
+var world_type = &quot;ordinary&quot;
+
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
+// (mostly for demonstration)
+var world = [&quot;wonky&quot;,&quot;ordinary&quot;]
+
+// Assume uniform likelihood
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(world) {
+  world === &quot;ordinary&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === &quot;wonky&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took place, or didn&#39;t
+var state = [&quot;happened&quot;,&quot;didn&#39;t happen&quot;]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances (intended)
+// choice of 4 utterances; prosody not modeled separately as affects only one variant
+var utterance = [&#39;oh yeah&#39;,&#39;exclamation&#39;,&#39;plain&#39;,&#39;(...)&#39;]
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for articulatory effort)
+var cost = {
+  &quot;oh yeah&quot;: 5,
+  &quot;exclamation&quot;: 4,
+  &quot;plain&quot;: 3,
+  &quot;(...)&quot;: 0
+}
+
+// Utterances (recalled/attended to)
+// assume that utterance most likely to be recalled as itself, but also has
+// non-trivial likelihood of being recalled as &#39;neighboring&#39; utterance
+// (with markers for plain utterance; vice versa; no utterance for &quot;plain&quot;
+// utterance; and vice versa).
+// alternately, this can be conceptualized as listener&#39;s belief of what the speaker
+// *intended* to say - but unclear if below is best way to represent that
+var utterance_r = function(u_i) {
+  u_i === &quot;oh yeah&quot; ? categorical([0.9,0.05,0.1,0.0001], utterance) :
+  u_i === &quot;exclamation&quot; ? categorical([0.05,0.9,0.1,0.0001], utterance) :
+  u_i === &quot;plain&quot; ? categorical([0.1,0.1,0.9,0.05], utterance) :
+  u_i === &quot;(...)&quot; ? categorical([0,0,0,1], utterance) :
+  true
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null &quot;utterance&quot; is consistent with all activity states
+var meaning = function(utterance,state) {
+  utterance === &quot;oh yeah&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;exclamation&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;plain&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;(...)&quot; ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 20
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Utterance posterior P(u_r | u_i)
+var utterancePosterior = mem(function(u_r) {
+  Infer({model: function() {
+    var u_i = utterancePrior()
+    condition(u_r == utterance_r(u_i))
+    return u_i
+  }})
+})
+
+// Literal listener
+var literalListener = mem(function(u_r, habituality) {
+  return Infer({model: function() {
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    condition(meaning(u_i,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality) {
+  return Infer({model: function() {
+    var u_i = utterancePrior()
+    var u_r = utterance_r(u_i)
+    factor(alpha * literalListener(u_r, habituality).score(state))
+    return u_i
+  }})
+})
+
+// Pragmatic listener
+// assume particular world for demonstration
+var pragmaticListener = function(u_r, info) {
+  return Infer({method: &quot;MCMC&quot;, samples: 50000, model: function() {
+    var world = world_type
+    var habituality = habitualityPrior(world)
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    observe(speaker(state, habituality),u_i)
+    info === &quot;both&quot; ? {state: state, habituality: habituality} :
+    info === &quot;state&quot; ? state :
+    info === &quot;habituality&quot; ? habituality :
+    true
+  }})
+}
+
+
+// literalListener(&quot;(...)&quot;,0.95)
+// literalListener(&quot;(...)&quot;,0.5)
+// literalListener(&quot;(...)&quot;,0.05)
+
+// speaker(&quot;happened&quot;,0.95)
+// speaker(&quot;happened&quot;,0.5)
+// speaker(&quot;happened&quot;,0.05)
+
+// pragmaticListener(&quot;(...)&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;plain&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;exclamation&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;oh yeah&quot;,&quot;both&quot;)</code></pre>
+<div id="results-1" class="section level3">
+<h3>Results</h3>
+<div id="literal-listener-1" class="section level4">
+<h4>Literal listener</h4>
+<p><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%201-1.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%201-2.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%201-3.png" width="672" /></p>
+</div>
+<div id="speaker-1" class="section level4">
+<h4>Speaker</h4>
+<p><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%202-1.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%202-2.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%202-3.png" width="672" /></p>
+</div>
+<div id="pragmatic-listener-1" class="section level4">
+<h4>Pragmatic listener</h4>
+<p><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-1.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-2.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-3.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-4.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-5.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-6.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-7.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-8.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-9.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-10.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-11.png" width="672" /><img src="models.playing_around_files/figure-html/null%20noisy%20hRSA%20plots%203-12.png" width="672" /></p>
+</div>
+</div>
+<div id="comparison-to-empirical-results-1" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.playing_around_files/figure-html/null%20empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.playing_around_files/figure-html/null%20empirical%20results%202-1.png" width="672" /></p>
+</div>
+</div>
+<div id="very-unlikely-to-be-misremembered" class="section level2">
+<h2>“(…)” very unlikely to be misremembered</h2>
+<pre class="js"><code>var beta_high_a = 2.19602561493963
+var beta_high_b = 0.410857186535822
+var beta_low_a = 0.59051473988806
+var beta_low_b = 0.599422405762914
+
+var world_type = &quot;ordinary&quot;
+
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
+// (mostly for demonstration)
+var world = [&quot;wonky&quot;,&quot;ordinary&quot;]
+
+// Assume uniform likelihood
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(world) {
+  world === &quot;ordinary&quot; ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
+  world === &quot;wonky&quot; ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took place, or didn&#39;t
+var state = [&quot;happened&quot;,&quot;didn&#39;t happen&quot;]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances (intended)
+// choice of 4 utterances; prosody not modeled separately as affects only one variant
+var utterance = [&#39;oh yeah&#39;,&#39;exclamation&#39;,&#39;plain&#39;,&#39;(...)&#39;]
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for articulatory effort)
+var cost = {
+  &quot;oh yeah&quot;: 5,
+  &quot;exclamation&quot;: 4,
+  &quot;plain&quot;: 3,
+  &quot;(...)&quot;: 0
+}
+
+// Utterances (recalled/attended to)
+// assume that utterance most likely to be recalled as itself, but also has
+// non-trivial likelihood of being recalled as &#39;neighboring&#39; utterance
+// (with markers for plain utterance; vice versa; no utterance for &quot;plain&quot;
+// utterance; and vice versa).
+// alternately, this can be conceptualized as listener&#39;s belief of what the speaker
+// *intended* to say - but unclear if below is best way to represent that
+var utterance_r = function(u_i) {
+  u_i === &quot;oh yeah&quot; ? categorical([0.9,0.05,0.1,0.0001], utterance) :
+  u_i === &quot;exclamation&quot; ? categorical([0.05,0.9,0.1,0.0001], utterance) :
+  u_i === &quot;plain&quot; ? categorical([0.1,0.1,0.9,0.05], utterance) :
+  u_i === &quot;(...)&quot; ? categorical([0.0001,0.0001,0.0001,0.99], utterance) :
+  true
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null &quot;utterance&quot; is consistent with all activity states
+var meaning = function(utterance,state) {
+  utterance === &quot;oh yeah&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;exclamation&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;plain&quot; ? state === &quot;happened&quot; : 
+  utterance === &quot;(...)&quot; ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 20
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Utterance posterior P(u_r | u_i)
+var utterancePosterior = mem(function(u_r) {
+  Infer({model: function() {
+    var u_i = utterancePrior()
+    condition(u_r == utterance_r(u_i))
+    return u_i
+  }})
+})
+
+// Literal listener
+var literalListener = mem(function(u_r, habituality) {
+  return Infer({model: function() {
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    condition(meaning(u_i,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality) {
+  return Infer({model: function() {
+    var u_i = utterancePrior()
+    var u_r = utterance_r(u_i)
+    factor(alpha * literalListener(u_r, habituality).score(state))
+    return u_i
+  }})
+})
+
+// Pragmatic listener
+// assume particular world for demonstration
+var pragmaticListener = function(u_r, info) {
+  return Infer({method: &quot;MCMC&quot;, samples: 50000, model: function() {
+    var world = world_type
+    var habituality = habitualityPrior(world)
+    var state = statePrior(habituality)
+    var u_i = sample(utterancePosterior(u_r))
+    observe(speaker(state, habituality),u_i)
+    info === &quot;both&quot; ? {state: state, habituality: habituality} :
+    info === &quot;state&quot; ? state :
+    info === &quot;habituality&quot; ? habituality :
+    true
+  }})
+}
+
+
+// literalListener(&quot;(...)&quot;,0.95)
+// literalListener(&quot;(...)&quot;,0.5)
+// literalListener(&quot;(...)&quot;,0.05)
+
+// speaker(&quot;happened&quot;,0.95)
+// speaker(&quot;happened&quot;,0.5)
+// speaker(&quot;happened&quot;,0.05)
+
+// pragmaticListener(&quot;(...)&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;plain&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;exclamation&quot;,&quot;both&quot;)
+// pragmaticListener(&quot;oh yeah&quot;,&quot;both&quot;)</code></pre>
+<div id="results-2" class="section level3">
+<h3>Results</h3>
+<div id="literal-listener-2" class="section level4">
+<h4>Literal listener</h4>
+<p><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%201-1.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%201-2.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%201-3.png" width="672" /></p>
+</div>
+<div id="speaker-2" class="section level4">
+<h4>Speaker</h4>
+<p><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%202-1.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%202-2.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%202-3.png" width="672" /></p>
+</div>
+<div id="pragmatic-listener-2" class="section level4">
+<h4>Pragmatic listener</h4>
+<p><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-1.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-2.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-3.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-4.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-5.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-6.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-7.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-8.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-9.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-10.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-11.png" width="672" /><img src="models.playing_around_files/figure-html/null%20diff%20noisy%20hRSA%20plots%203-12.png" width="672" /></p>
+</div>
+</div>
+<div id="comparison-to-empirical-results-2" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.playing_around_files/figure-html/null%20diff%20empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.playing_around_files/figure-html/null%20diff%20empirical%20results%202-1.png" width="672" /></p>
+</div>
+</div>
+<div id="fix-sums-tbd" class="section level2">
+<h2>Fix sums (TBD)</h2>
+<hr />
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
