@@ -50,7 +50,15 @@ var utterance_r = function(u_i) {
   u_i === "oh yeah" ? categorical([0.9,0.05,0.1,0.0001], utterance) :
   u_i === "exclamation" ? categorical([0.05,0.9,0.1,0.0001], utterance) :
   u_i === "plain" ? categorical([0.1,0.1,0.9,0.05], utterance) :
-  u_i === "(...)" ? categorical([0,0,0,1], utterance) :
+  u_i === "(...)" ? categorical([0.0001,0.0001,0.0001,1], utterance) :
+  true
+}
+
+var utterance_r_prob = function(u_i, u_r) {
+  u_i === "oh yeah" ? [0.9,0.05,0.1,0.0001][_.indexOf(utterance, u_r)] :
+  u_i === "exclamation" ? [0.05,0.9,0.1,0.0001][_.indexOf(utterance, u_r)] :
+  u_i === "plain" ? [0.1,0.1,0.9,0.05][_.indexOf(utterance, u_r)] :
+  u_i === "(...)" ? [0.0001,0.0001,0.0001,1][_.indexOf(utterance, u_r)] :
   true
 }
 
@@ -79,7 +87,7 @@ var utterancePrior = function() {
 var utterancePosterior = mem(function(u_r) {
   Infer({model: function() {
     var u_i = utterancePrior()
-    condition(u_r == utterance_r(u_i))
+    condition(u_r === utterance_r(u_i))
     return u_i
   }})
 })
@@ -89,17 +97,26 @@ var literalListener = mem(function(u_r, habituality) {
   return Infer({model: function() {
     var state = statePrior(habituality)
     var u_i = sample(utterancePosterior(u_r))
-    condition(meaning(u_i,state))
+    condition(meaning(u_i, state))
     return state
   }})
 })
+
+// Expected utilities
+var get_EUs = function(u_i, state, habituality){
+  var EUs = sum(map(function(u_r) {
+    utterance_r_prob(u_i, u_r) *
+      literalListener(u_r, habituality).score(state)
+    }, utterance))
+  return EUs
+}
 
 // Speaker
 var speaker = mem(function(state, habituality) {
   return Infer({model: function() {
     var u_i = utterancePrior()
-    var u_r = utterance_r(u_i)
-    factor(alpha * literalListener(u_r, habituality).score(state))
+    var EUs = get_EUs(u_i, state, habituality)
+    factor(alpha * EUs)
     return u_i
   }})
 })

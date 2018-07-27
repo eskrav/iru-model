@@ -79,7 +79,7 @@ var utterancePrior = function() {
 var utterancePosterior = mem(function(u_r) {
   Infer({model: function() {
     var u_i = utterancePrior()
-    condition(u_r == utterance_r(u_i))
+    condition(u_r === utterance_r(u_i))
     return u_i
   }})
 })
