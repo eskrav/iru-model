@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Modeling pragmatic inferences triggered by informational redundancy (additional models)</title>
+
+<script src="models.unpredictable_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="models.unpredictable_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="models.unpredictable_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="models.unpredictable_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="models.unpredictable_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="models.unpredictable_files/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="models.unpredictable_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="models.unpredictable_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="models.unpredictable_files/navigation-1.1/tabsets.js"></script>
+<link href="models.unpredictable_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="models.unpredictable_files/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Modeling pragmatic inferences triggered by informational redundancy (additional models)</h1>
+
+</div>
+
+
+<p>This page demonstrates the performance of the noisy channel hRSA with lower-<em>habituality</em> utterances.</p>
+<div id="empirical-priors" class="section level2">
+<h2>Empirical priors</h2>
+<div id="wonky-context---habitual-activity" class="section level3">
+<h3>Wonky context - habitual activity</h3>
+<p><strong>Context: </strong>“<em>John is typically broke, and doesn’t usually pay when he goes to the grocery store.</em>”<br />
+<strong>Question: </strong>“<em>How often do you think John usually pays the cashier, when grocery shopping?</em>”</p>
+<p>In this case, the distribution of responses suggests that participants differ in whether they adjust their estimates for <em>activity habituality</em> when a context is ‘wonky’ (and either clearly states, or suggests, that the activity is unpredictable), although a large number shift their estimates considerably. This likely indicates a relative insensitivity to the context, particularly where it does not state quite as bluntly that the activity usually doesn’t occur. Overall, however, comprehenders who see the informationally redundant utterance are relatively likely to conclude that <em>John</em> is <em>not</em> a habitual cashier-payer.</p>
+<!-- **CONSIDER INCLUDING NORMING RATINGS FROM SIMPLER CONTEXT SENTENCES, BUT MAKES MORE DIFFICULT TO COMPARE EMPIRICAL RESULTS** -->
+<p>To note, for this set of ratings, and those following, there is a clear ‘bump’ mid-distribution, suggesting that participants have a tendency to click right in the middle of the slider when the rating roughly approximates 50%. This does harm distribution fit somewhat.</p>
+<p><img src="models.unpredictable_files/figure-html/wonk%20pred%20plot-1.png" width="672" /></p>
+<pre><code>## Fitting of the distribution &#39; beta &#39; by maximum likelihood 
+## Parameters : 
+##         estimate Std. Error
+## shape1 0.5905147 0.01647926
+## shape2 0.5994224 0.01679374
+## Loglikelihood:  260.599   AIC:  -517.198   BIC:  -505.8986 
+## Correlation matrix:
+##           shape1    shape2
+## shape1 1.0000000 0.5333187
+## shape2 0.5333187 1.0000000</code></pre>
+<p><img src="models.unpredictable_files/figure-html/wonk%20pred%20fit-1.png" width="672" /></p>
+</div>
+<div id="typical-context---non-habitual-activity" class="section level3">
+<h3>Typical context - non-habitual activity</h3>
+<p><strong>Context: </strong>“<em>John often goes to the grocery store around the corner from his apartment.</em>”<br />
+<strong>Question: </strong>“<em>How often do you think John usually gets apples, when grocery shopping?</em>”</p>
+<p>For this set of ratings and the following, it is clear that participants take apple-bying to be a moderately habitual to relatively non-habitual activity.</p>
+<p><img src="models.unpredictable_files/figure-html/typ%20unpred%20plot-1.png" width="672" /></p>
+<pre><code>## Fitting of the distribution &#39; beta &#39; by maximum likelihood 
+## Parameters : 
+##        estimate Std. Error
+## shape1 0.902843 0.02497675
+## shape2 1.367937 0.04094544
+## Loglikelihood:  146.0752   AIC:  -288.1505   BIC:  -276.8511 
+## Correlation matrix:
+##           shape1    shape2
+## shape1 1.0000000 0.6631126
+## shape2 0.6631126 1.0000000</code></pre>
+<p><img src="models.unpredictable_files/figure-html/typ%20unpred%20fit-1.png" width="672" /></p>
+</div>
+<div id="wonky-context---non-habitual-activity" class="section level3">
+<h3>Wonky context - non-habitual activity</h3>
+<p><strong>Context: </strong>“<em>John is typically broke, and doesn’t usually pay when he goes to the grocery store.</em>”<br />
+<strong>Question: </strong>“<em>How often do you think John usually gets apples, when grocery shopping?</em>”</p>
+<p>Here, it appears that comprehenders are only slightly affected by the <em>wonky</em> context - <em>activity habituality</em> estimates do decrease slightly, but likely as a result of a general suspicion that <em>John</em> does not engage in very typical grocery shopping.</p>
+<p><img src="models.unpredictable_files/figure-html/wonk%20unpred%20plot-1.png" width="672" /></p>
+<pre><code>## Fitting of the distribution &#39; beta &#39; by maximum likelihood 
+## Parameters : 
+##         estimate Std. Error
+## shape1 0.7924722 0.02161888
+## shape2 1.3470197 0.04084883
+## Loglikelihood:  236.8883   AIC:  -469.7765   BIC:  -458.4771 
+## Correlation matrix:
+##           shape1    shape2
+## shape1 1.0000000 0.6438477
+## shape2 0.6438477 1.0000000</code></pre>
+<p><img src="models.unpredictable_files/figure-html/wonk%20unpred%20fit-1.png" width="672" /></p>
+</div>
+</div>
+<div id="wonky-context---habitual" class="section level2">
+<h2>Wonky context - habitual</h2>
+<p><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-1.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-2.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-3.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-4.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-5.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-6.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-7.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-8.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-9.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-10.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-11.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20noisy%20hRSA%20plots%203-12.png" width="672" /></p>
+<div id="comparison-to-empirical-results" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.unpredictable_files/figure-html/wonky%20empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.unpredictable_files/figure-html/wonky%20empirical%20results%202-1.png" width="672" /></p>
+</div>
+</div>
+<div id="ordinary-context---non-habitual" class="section level2">
+<h2>Ordinary context - non-habitual</h2>
+<p><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-1.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-2.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-3.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-4.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-5.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-6.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-7.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-8.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-9.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-10.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-11.png" width="672" /><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20noisy%20hRSA%20plots%203-12.png" width="672" /></p>
+<div id="comparison-to-empirical-results-1" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.unpredictable_files/figure-html/ordinary%20nonhab%20empirical%20results%202-1.png" width="672" /></p>
+</div>
+</div>
+<div id="wonky-context---non-habitual" class="section level2">
+<h2>Wonky context - non-habitual</h2>
+<p><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-1.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-2.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-3.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-4.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-5.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-6.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-7.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-8.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-9.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-10.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-11.png" width="672" /><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20noisy%20hRSA%20plots%203-12.png" width="672" /></p>
+<div id="comparison-to-empirical-results-2" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.unpredictable_files/figure-html/wonky%20nonhab%20empirical%20results%202-1.png" width="672" /></p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

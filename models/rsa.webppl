@@ -19,7 +19,7 @@ var utterance = ['oh yeah','exclamation','plain','(...)']
 // (rough estimate of number of constituents + extra for
 // articulatory effort)
 var cost = {
-  "oh yeah": 5,
+  "oh yeah": 4.5,
   "exclamation": 4,
   "plain": 3,
   "(...)": 0
@@ -36,19 +36,22 @@ var meaning = function(utt,state) {
   true
 }
 
-// Speaker optimality
-var alpha = 20
+// Speaker optimality (maximizing utility)
+var alpha = 7
+
+// Speaker optimality (minimizing cost)
+var lambda = 1
 
 // Utterance prior
 // utterance prior determined by utterance cost, as defined above
 var utterancePrior = function() {
-  var uttProbs = map(function(u) {return Math.exp(-cost[u]) }, utterance)
+  var uttProbs = map(function(u) {return Math.exp(-lambda * cost[u])}, utterance)
   return categorical(uttProbs, utterance)
 }
 
 // Literal listener
 var literalListener = mem(function(utterance) {
-  return Infer({model: function() {
+  return Infer({method: 'enumerate', model: function() {
     var state = statePrior()
     condition(meaning(utterance,state))
     return state
@@ -57,7 +60,7 @@ var literalListener = mem(function(utterance) {
 
 // Speaker
 var speaker = mem(function(state) {
-  return Infer({model: function() {
+  return Infer({method: 'enumerate', model: function() {
     var utterance = utterancePrior()
     factor(alpha * literalListener(utterance).score(state))
     return utterance
@@ -66,22 +69,22 @@ var speaker = mem(function(state) {
 
 // Pragmatic listener
 var pragmaticListener = function(utterance) {
-  return Infer({model: function() {
+  return Infer({method: 'enumerate', model: function() {
     var state = statePrior()
     observe(speaker(state),utterance)
     return state
   }})
 }
 
-// literalListener("(...)")
-// literalListener("plain")
-// literalListener("exclamation")
-// literalListener("oh yeah")
+// viz(literalListener("(...)"))
+// viz(literalListener("plain"))
+// viz(literalListener("exclamation"))
+// viz(literalListener("oh yeah"))
 
-// speaker("happened")
-// speaker("didn't happen")
+// viz(speaker("happened"))
+// viz(speaker("didn't happen"))
 
-// pragmaticListener("(...)")
-// pragmaticListener("plain")
-// pragmaticListener("exclamation")
-// pragmaticListener("oh yeah")
+// viz(pragmaticListener("(...)"))
+// viz(pragmaticListener("plain"))
+// viz(pragmaticListener("exclamation"))
+// viz(pragmaticListener("oh yeah"))

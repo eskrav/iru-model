@@ -1,0 +1,131 @@
+var roundTo3 = function(x){
+  return Math.round(x * 1000) / 1000
+}
+
+var granularity = 20
+var midBins = map(function(x) {roundTo3(x/granularity + 1/(2*granularity))}, 
+                  _.range(0,granularity))
+
+var DiscreteBeta = cache(function(a, b){
+  Infer({model: function(){
+    categorical({
+      vs:midBins,
+      ps:map(function(x){
+        // var xi = x >= 1 ? 0.99 : x == 0 ? 0.01 : x
+        Math.exp(Beta({a, b}).score(x))
+      }, midBins)
+    })
+  }})
+})
+
+var beta_high_a = 2.196026
+var beta_high_b = 0.410857
+var beta_low_a = 0.902843
+var beta_low_b = 1.367937
+
+// Activity type
+var activityType = ["habitual","non-habitual"]
+
+// Activity type prior
+var activityTypePrior = function() {
+  categorical([0.5, 0.5], activityType)
+}
+
+// Habituality priors
+var habitualityPrior = function(activityType) {
+  activityType === "habitual" ? sample(DiscreteBeta(beta_high_a, beta_high_b)) :
+  activityType === "non-habitual" ? sample(DiscreteBeta(beta_low_a, beta_low_b)) :
+  true
+}
+
+// Theta prior
+var thetaPrior = function(activity) {
+  var thetas = midBins
+  return uniformDraw(thetas)
+}
+
+// Current activity state
+var state = ["happened","didn't happen"]
+
+// State priors
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances
+var utterance = ['oh yeah','exclamation','plain','(...)']
+
+// Utterance cost
+var cost = {
+  "oh yeah": 5,
+  "exclamation": 4,
+  "plain": 3,
+  "(...)": 0
+}
+
+// Meaning
+var meaning = function(utterance,state,
+                        thetaPlain,thetaExclamation,
+                        thetaOhYeah,habituality) {
+  utterance === "oh yeah" ? state === "happened" && habituality <= thetaOhYeah : 
+  utterance === "exclamation" ? state === "happened" && habituality <= thetaExclamation : 
+  utterance === "plain" ? state === "happened" && habituality <= thetaPlain : 
+  utterance === "(...)" ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 10
+
+// Utterance prior
+var utterancePrior = mem(function() {
+  var uttProbs = map(function(u) {return Math.exp(-cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+})
+
+// Literal listener
+var literalListener = mem(function(utterance, 
+                                   thetaPlain, thetaExclamation,
+                                   thetaOhYeah, activityType) {
+  return Infer({method: "enumerate", model: function() {
+    var habituality = habitualityPrior(activityType) 
+    var state = statePrior(habituality)
+    condition(meaning(utterance, state, thetaPlain, thetaExclamation,
+                        thetaOhYeah, habituality))
+    return {state, habituality} 
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, 
+                            habituality, 
+                            thetaPlain,
+                            thetaExclamation,
+                            thetaOhYeah, 
+                            activityType) {
+  return Infer({method: "enumerate", model: function() {
+    var utterance = utterancePrior()
+    factor(alpha * literalListener(utterance, thetaPlain, thetaExclamation,
+                        thetaOhYeah, activityType).score({state, habituality}))
+    return utterance
+  }})
+})
+
+// Pragmatic listener
+var pragmaticListener = mem(function(utterance, activityType) {
+  return Infer({method: "MCMC", samples: 50000,
+                model: function() {
+    var habituality = habitualityPrior(activityType)
+    var thetaPlain = thetaPrior()
+    var thetaExclamation = thetaPrior()
+    var thetaOhYeah = thetaPrior()
+    var state = statePrior(habituality)
+    observe(speaker(state, habituality, thetaPlain, thetaExclamation,
+                        thetaOhYeah, activityType), utterance)
+    return {state, habituality, thetaPlain, thetaExclamation, thetaOhYeah}
+  }})
+})
+
+// print(expectation(pragmaticListener("(...)", "habitual")))
+// print(expectation(pragmaticListener("plain", "habitual")))
+// print(expectation(pragmaticListener("oh yeah", "habitual")))
