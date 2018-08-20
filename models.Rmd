@@ -485,10 +485,6 @@ data_plain <- (filter(posterior_typ_pred, experiment=="period") %>% dplyr::selec
 data_exclamation <- (filter(posterior_typ_pred, experiment=="exclamation") %>% dplyr::select(rating))/100
 data_ohyeah <- (filter(posterior_typ_pred, experiment=="ohyeah") %>% dplyr::select(rating))/100
 
-<<<<<<< HEAD
-empirical <- nrow(data_empty) + nrow(posterior_typ_pred)
-predicted <- nrow(l1_empty_habit)*4
-=======
 experiment <- c(rep("\"(...)\"",nrow(data_empty)), rep("\"John paid the\ncashier.\"",nrow(data_plain)), rep("\"John paid the\ncashier!\"",nrow(data_exclamation)), rep("\"Oh yeah, and John\npaid the cashier.\"",nrow(data_ohyeah)))
 
 empirical <- tibble(experiment = experiment, 
@@ -499,7 +495,6 @@ empirical <- tibble(experiment = experiment,
   mutate_if(is.character, as.factor)
 
 experiment <- c(rep("\"(...)\"",20), rep("\"John paid the\ncashier.\"",20), rep("\"John paid the\ncashier!\"",20), rep("\"Oh yeah, and John\npaid the cashier.\"",20))
->>>>>>> gh-pages
 
 predicted <- tibble(experiment = experiment,
                     habituality = c(l1_empty_habit$habituality, 
