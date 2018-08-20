@@ -1,3 +1,23 @@
+// Function to create discrete beta distribution
+var roundTo3 = function(x){
+  return Math.round(x * 1000) / 1000
+}
+
+var granularity = 20
+var midBins = map(function(x) {roundTo3(x/granularity + 1/(2*granularity))}, 
+                  _.range(0,granularity))
+
+var DiscreteBeta = cache(function(a, b){
+  Infer({model: function(){
+    categorical({
+      vs:midBins,
+      ps:map(function(x){
+        Math.exp(Beta({a, b}).score(x))
+      }, midBins)
+    })
+  }})
+})
+
 // Is this a world in which the conventionally habitual activity is
 // habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
 // (mostly for demonstration)
@@ -11,8 +31,8 @@ var worldPrior = function() {
 // Habituality priors
 // beta distributions fit to empirical priors
 var habitualityPrior = function(world) {
-  world === "ordinary" ? sample(Beta({a: beta_high_a, b: beta_high_b})) :
-  world === "wonky" ? sample(Beta({a: beta_low_a, b: beta_low_b})) :
+  world === "ordinary" ? sample(DiscreteBeta(beta_high_a, beta_high_b)) :
+  world === "wonky" ? sample(DiscreteBeta(beta_low_a, beta_low_b)) :
   true
 }
 
@@ -31,9 +51,9 @@ var statePrior = function(habituality) {
 var utterance = ['oh yeah','exclamation','plain','(...)']
 
 // Utterance cost
-// (rough estimate of number of constituents + extra for articulatory effort)
+// rough estimate of relative costs given number of consituents + articulatory effort
 var cost = {
-  "oh yeah": 5,
+  "oh yeah": 4.5,
   "exclamation": 4,
   "plain": 3,
   "(...)": 0
@@ -46,19 +66,25 @@ var cost = {
 // utterance; and vice versa).
 // alternately, this can be conceptualized as listener's belief of what the speaker
 // *intended* to say - but unclear if below is best way to represent that
+var oh_yeah = [0.97,0.01,0.02,0.0001]
+var exclamation = [0.01,0.97,0.02,0.0001]
+var plain = [0.02,0.02,0.95,0.01]
+var zero = [0.0001,0.0001,0.001,1]
+
 var utterance_r = function(u_i) {
-  u_i === "oh yeah" ? categorical([0.9,0.05,0.1,0.0001], utterance) :
-  u_i === "exclamation" ? categorical([0.05,0.9,0.1,0.0001], utterance) :
-  u_i === "plain" ? categorical([0.1,0.1,0.9,0.05], utterance) :
-  u_i === "(...)" ? categorical([0.0001,0.0001,0.001,0.99], utterance) :
+  u_i === "oh yeah" ? categorical(oh_yeah, utterance) :
+  u_i === "exclamation" ? categorical(exclamation, utterance) :
+  u_i === "plain" ? categorical(plain, utterance) :
+  u_i === "(...)" ? categorical(zero, utterance) :
   true
 }
 
+// Confusion matrix for purpose of summing up probabilities
 var utterance_r_prob = function(u_i, u_r) {
-  u_i === "oh yeah" ? [0.9,0.05,0.1,0.0001][_.indexOf(utterance, u_r)] :
-  u_i === "exclamation" ? [0.05,0.9,0.1,0.0001][_.indexOf(utterance, u_r)] :
-  u_i === "plain" ? [0.1,0.1,0.9,0.05][_.indexOf(utterance, u_r)] :
-  u_i === "(...)" ? [0.0001,0.0001,0.001,0.99][_.indexOf(utterance, u_r)] :
+  u_i === "oh yeah" ? oh_yeah[_.indexOf(utterance, u_r)] :
+  u_i === "exclamation" ? exclamation[_.indexOf(utterance, u_r)] :
+  u_i === "plain" ? plain[_.indexOf(utterance, u_r)] :
+  u_i === "(...)" ? zero[_.indexOf(utterance, u_r)] :
   true
 }
 
@@ -73,19 +99,22 @@ var meaning = function(utterance,state) {
   true
 }
 
-// Speaker optimality
-var alpha = 20
+// Speaker optimality (maximizing utility)
+var alpha = 100
+
+// Speaker optimality (minimizing cost)
+var lambda = 1
 
 // Utterance prior
 // utterance prior determined by utterance cost, as defined above
 var utterancePrior = function() {
-  var uttProbs = map(function(u) {return Math.exp(-cost[u])}, utterance)
+  var uttProbs = map(function(u) {return Math.exp(-lambda * cost[u])}, utterance)
   return categorical(uttProbs, utterance)
 }
 
 // Utterance posterior P(u_r | u_i)
 var utterancePosterior = mem(function(u_r) {
-  Infer({model: function() {
+  Infer({method: 'enumerate', model: function() {
     var u_i = utterancePrior()
     condition(u_r === utterance_r(u_i))
     return u_i
@@ -94,7 +123,7 @@ var utterancePosterior = mem(function(u_r) {
 
 // Literal listener
 var literalListener = mem(function(u_r, habituality) {
-  return Infer({model: function() {
+  return Infer({method: 'enumerate', model: function() {
     var state = statePrior(habituality)
     var u_i = sample(utterancePosterior(u_r))
     condition(meaning(u_i, state))
@@ -113,7 +142,7 @@ var get_EUs = function(u_i, state, habituality){
 
 // Speaker
 var speaker = mem(function(state, habituality) {
-  return Infer({model: function() {
+  return Infer({method: 'enumerate', model: function() {
     var u_i = utterancePrior()
     var EUs = get_EUs(u_i, state, habituality)
     factor(alpha * EUs)
@@ -124,7 +153,7 @@ var speaker = mem(function(state, habituality) {
 // Pragmatic listener
 // assume particular world for demonstration
 var pragmaticListener = function(u_r, info) {
-  return Infer({method: "MCMC", samples: 50000, model: function() {
+  return Infer({method: 'enumerate', model: function() {
     var world = world_type
     var habituality = habitualityPrior(world)
     var state = statePrior(habituality)
@@ -138,15 +167,15 @@ var pragmaticListener = function(u_r, info) {
 }
 
 
-// literalListener("(...)",0.95)
-// literalListener("(...)",0.5)
-// literalListener("(...)",0.05)
+// viz(literalListener("(...)",0.95))
+// viz(literalListener("(...)",0.5))
+// viz(literalListener("(...)",0.05))
 
-// speaker("happened",0.95)
-// speaker("happened",0.5)
-// speaker("happened",0.05)
+// viz(speaker("happened",0.95))
+// viz(speaker("happened",0.5))
+// viz(speaker("happened",0.05))
 
-// pragmaticListener("(...)","both")
-// pragmaticListener("plain","both")
-// pragmaticListener("exclamation","both")
-// pragmaticListener("oh yeah","both")
+// viz(pragmaticListener("(...)","habituality"))
+// viz(pragmaticListener("plain","habituality"))
+// viz(pragmaticListener("exclamation","habituality"))
+// viz(pragmaticListener("oh yeah","habituality"))

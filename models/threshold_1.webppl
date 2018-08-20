@@ -1,0 +1,179 @@
+var lowerBins = [
+	0,
+  0.01,
+  0.05,
+  0.1,
+  0.15,
+  0.2,
+  0.25,
+  0.3,
+  0.35,
+  0.4,
+  0.45,
+  0.5,
+  0.55,
+  0.6,
+  0.65,
+  0.7,
+  0.75,
+  0.8,
+  0.85,
+  0.9,
+  0.95,
+  0.99]
+var upperBins = [
+  0.01,
+  0.05,
+  0.1,
+  0.15,
+  0.2,
+  0.25,
+  0.3,
+  0.35,
+  0.4,
+  0.45,
+  0.5,
+  0.55,
+  0.6,
+  0.65,
+  0.7,
+  0.75,
+  0.8,
+  0.85,
+  0.9,
+  0.95,
+  0.99,
+  1
+];
+
+var roundTo3 = function(x){
+  return Math.round(x * 1000) / 1000
+}
+
+var midBins = map2(function(b1,b2){
+  return roundTo3((b2 - b1)/2 + b1)
+}, lowerBins, upperBins)
+
+var DiscreteBeta = cache(function(a, b){
+  Infer({model: function(){
+    categorical({
+      vs:midBins,
+      ps:map(function(x){
+        // var xi = x >= 1 ? 0.99 : x == 0 ? 0.01 : x
+        Math.exp(Beta({a, b}).score(x))
+      }, midBins)
+    })
+  }})
+})
+
+
+var beta_high_a = 2.196026
+var beta_high_b = 0.410857
+var beta_low_a = 0.902843
+var beta_low_b = 1.367937
+
+// Activity type
+var activityType = ["habitual","non-habitual"]
+
+// Activity type prior
+var activityTypePrior = function() {
+  categorical([0.5, 0.5], activityType)
+}
+
+// Habituality priors
+var habitualityPrior = function(activityType) {
+  activityType === "habitual" ? sample(DiscreteBeta(beta_high_a, beta_high_b)) :
+  activityType === "non-habitual" ? sample(DiscreteBeta(beta_low_a, beta_low_b)) :
+  true
+}
+
+// Theta prior
+var thetaPrior = function(activity) {
+  var thetas = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95]
+  return uniformDraw(thetas)
+}
+
+// Current activity state
+var state = ["happened","didn't happen"]
+
+// State priors
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances
+var utterance = ['oh yeah','exclamation','plain','(...)']
+
+// Utterance cost
+var cost = {
+  "oh yeah": 5,
+  "exclamation": 4,
+  "plain": 3,
+  "(...)": 0
+}
+
+// Meaning
+var meaning = function(utterance,state,theta,habituality) {
+  utterance === "oh yeah" ? state === "happened" && habituality <= theta : 
+  utterance === "exclamation" ? state === "happened" && habituality <= theta : 
+  utterance === "plain" ? state === "happened" && habituality <= theta : 
+  utterance === "(...)" ? true :
+  true
+}
+
+// Speaker optimality
+var alpha = 3
+
+// Utterance prior
+var utterancePrior = mem(function() {
+  var uttProbs = map(function(u) {return Math.exp(-alpha*cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+})
+
+// Literal listener
+var literalListener = mem(function(utterance, theta, activityType) {
+  return Infer({model: function() {
+//     var habituality = uniformDraw(midBins)
+//     var a = activityType === "habitual" ? beta_high_a : beta_low_a
+//     var b = activityType === "habitual" ? beta_high_b : beta_low_b
+//     factor(Beta({a, b}).score(habituality))
+    var habituality = habitualityPrior(activityType) 
+    var state = statePrior(habituality)
+    condition(meaning(utterance, state, theta, habituality))
+    return {state: state, 
+            habituality: habituality}
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality, theta, activityType) {
+  return Infer({model: function() {
+    var utterance = utterancePrior()
+    factor(alpha * literalListener(utterance, theta, activityType).score({state, habituality}))
+    return utterance
+  }})
+})
+
+// viz(speaker("happened", 0.725, 0.8, "habitual"))
+// viz(speaker("happened", 0.725, 0.9, "habitual"))
+// viz(speaker("happened", 0.725, 1, "habitual"))
+
+
+// Pragmatic listener
+var pragmaticListener = mem(function(utterance, info, activityType) {
+  return Infer({method: "MCMC", samples: 30000, model: function() {
+    var habituality = habitualityPrior(activityType)
+    var theta = thetaPrior()
+    var state = statePrior(habituality)
+    observe(speaker(state, habituality, theta, activityType), utterance)
+    info === "both" ? {state: state, theta: theta, habituality: habituality} :
+    info === "state" ? state :
+    info === "theta" ? theta :
+    info === "habituality" ? habituality :
+    true
+  }})
+})
+
+// print(expectation(pragmaticListener("(...)", "habituality", "habitual")))
+print(expectation(pragmaticListener("plain", "habituality", "habitual")))
+print(expectation(pragmaticListener("oh yeah", "habituality", "habitual")))
