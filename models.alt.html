@@ -226,10 +226,10 @@ div.tocify {
 <div id="almost-cant-be-misremembered" class="section level2">
 <h2>“(…)” (almost) can’t be misremembered</h2>
 <p>Making zero utterance almost impossible to misremember breaks the model.</p>
-<pre class="js"><code>var beta_high_a = 2.19602561493963
-var beta_high_b = 0.410857186535822
-var beta_low_a = 0.59051473988806
-var beta_low_b = 0.599422405762914
+<pre class="js"><code>var beta_high_a = 2.196026
+var beta_high_b = 0.410857
+var beta_low_a = 0.902843
+var beta_low_b = 1.367937
 
 var world_type = &quot;ordinary&quot;
 
@@ -438,10 +438,10 @@ var pragmaticListener = function(u_r, info) {
 <div id="extremely-unlikely-to-be-misremembered" class="section level2">
 <h2>“(…)” extremely unlikely to be misremembered</h2>
 <p>Making zero utterance extremely unlikely to be misremembered breaks the model, unless utility-maximizing optimality set extremely high.</p>
-<pre class="js"><code>var beta_high_a = 2.19602561493963
-var beta_high_b = 0.410857186535822
-var beta_low_a = 0.59051473988806
-var beta_low_b = 0.599422405762914
+<pre class="js"><code>var beta_high_a = 2.196026
+var beta_high_b = 0.410857
+var beta_low_a = 0.902843
+var beta_low_b = 1.367937
 
 var world_type = &quot;ordinary&quot;
 
@@ -652,13 +652,16 @@ var pragmaticListener = function(u_r, info) {
 <!-- ![](board.jpg) -->
 <ul>
 <li><span class="math inline">\(P_{L_0}(s|u,\boldsymbol\theta,h) \propto P(s|[\![m]\!]^{\boldsymbol\theta,h})\)</span></li>
-<li><span class="math inline">\(P_{S_1}(u|s,\boldsymbol\theta,h;\alpha,C) \propto P(u;C)\exp(\alpha\log P_{L_0}(s|u,\boldsymbol\theta,h))\)</span></li>
-<li><span class="math inline">\(P_{L_1}(s,\boldsymbol\theta,h|u) \propto P_{S_1}(u|s,\boldsymbol\theta,h;\alpha,C) \cdot P(\boldsymbol\theta) \cdot P(s|h) \cdot P(h)\)</span></li>
+<li><span class="math inline">\(P_{S_1}(u|s,\boldsymbol\theta,h;\alpha,\lambda,C) \propto P(u;\lambda,C)\exp(\alpha\log P_{L_0}(s|u,\boldsymbol\theta,h))\)</span></li>
+<li><span class="math inline">\(P_{L_1}(s,\boldsymbol\theta,h|u) \propto P_{S_1}(u|s,\boldsymbol\theta,h;\alpha,\lambda,C) \cdot P(\boldsymbol\theta) \cdot P(s|h) \cdot P(h)\)</span></li>
 </ul>
-<pre class="js"><code>var beta_high_a = 2.19602561493963
-var beta_high_b = 0.410857186535822
-var beta_low_a = 0.59051473988806
-var beta_low_b = 0.599422405762914
+<pre class="js"><code>var beta_high_a = 2.196026
+var beta_high_b = 0.410857
+var beta_low_a = 0.902843
+var beta_low_b = 1.367937
+var alpha_value = 1
+var lambda_value = 100
+
 var roundTo3 = function(x){
   return Math.round(x * 1000) / 1000
 }
@@ -672,6 +675,7 @@ var DiscreteBeta = cache(function(a, b){
     categorical({
       vs:midBins,
       ps:map(function(x){
+        // var xi = x &gt;= 1 ? 0.99 : x == 0 ? 0.01 : x
         Math.exp(Beta({a, b}).score(x))
       }, midBins)
     })
@@ -679,17 +683,17 @@ var DiscreteBeta = cache(function(a, b){
 })
 
 // Activity type
-var activity = [&quot;habitual&quot;,&quot;non-habitual&quot;]
+var activityType = [&quot;habitual&quot;,&quot;non-habitual&quot;]
 
 // Activity type prior
-var activityPrior = function() {
-  categorical([0.5, 0.5], activity)
+var activityTypePrior = function() {
+  categorical([0.5, 0.5], activityType)
 }
 
 // Habituality priors
-var habitualityPrior = function(activity) {
-  activity === &quot;habitual&quot; ? sample(DiscreteBeta(beta_high_a, beta_high_b)) :
-  activity === &quot;non-habitual&quot; ? sample(DiscreteBeta(beta_low_a, beta_low_b)) :
+var habitualityPrior = function(activityType) {
+  activityType === &quot;habitual&quot; ? sample(DiscreteBeta(beta_high_a, beta_high_b)) :
+  activityType === &quot;non-habitual&quot; ? sample(DiscreteBeta(beta_low_a, beta_low_b)) :
   true
 }
 
@@ -708,11 +712,10 @@ var statePrior = function(habituality) {
 }
 
 // Utterances
-var utterance = [&#39;oh yeah&#39;,&#39;exclamation&#39;,&#39;plain&#39;,&#39;(...)&#39;]
+var utterance = [&#39;exclamation&#39;,&#39;plain&#39;,&#39;(...)&#39;]
 
 // Utterance cost
 var cost = {
-  &quot;oh yeah&quot;: 4.5,
   &quot;exclamation&quot;: 4,
   &quot;plain&quot;: 3,
   &quot;(...)&quot;: 0
@@ -721,19 +724,18 @@ var cost = {
 // Meaning
 var meaning = function(utterance,state,
                         thetaPlain,thetaExclamation,
-                        thetaOhYeah,habituality) {
-  utterance === &quot;oh yeah&quot; ? state === &quot;happened&quot; &amp;&amp; habituality &lt;= thetaOhYeah : 
+                        habituality) {
   utterance === &quot;exclamation&quot; ? state === &quot;happened&quot; &amp;&amp; habituality &lt;= thetaExclamation : 
   utterance === &quot;plain&quot; ? state === &quot;happened&quot; &amp;&amp; habituality &lt;= thetaPlain : 
   utterance === &quot;(...)&quot; ? true :
   true
 }
 
-// Speaker optimality (maximizing utility)
-var alpha = 1
+// Speaker optimality (utility)
+var alpha = alpha_value
 
-// Speaker optimality (minimizing cost)
-var lambda = 1
+// Speaker optimality (cost)
+var lambda = lambda_value
 
 // Utterance prior
 var utterancePrior = mem(function() {
@@ -744,13 +746,13 @@ var utterancePrior = mem(function() {
 // Literal listener
 var literalListener = mem(function(utterance, 
                                    thetaPlain, thetaExclamation,
-                                   thetaOhYeah, activity) {
-  return Infer({model: function() {
-    var habituality = habitualityPrior(activity)
+                                   activityType) {
+  return Infer({method: &quot;enumerate&quot;, model: function() {
+    var habituality = habitualityPrior(activityType) 
     var state = statePrior(habituality)
     condition(meaning(utterance, state, thetaPlain, thetaExclamation,
-                        thetaOhYeah, habituality))
-    return({state, habituality})
+                        habituality))
+    return {state, habituality} 
   }})
 })
 
@@ -759,43 +761,53 @@ var speaker = mem(function(state,
                             habituality, 
                             thetaPlain,
                             thetaExclamation,
-                            thetaOhYeah,
-                            activity) {
-  return Infer({model: function() {
+                            activityType) {
+  return Infer({method: &quot;enumerate&quot;, model: function() {
     var utterance = utterancePrior()
-    factor(alpha * literalListener(utterance, thetaPlain, thetaExclamation,
-                        thetaOhYeah, activity).score({state, habituality}))
+    factor(alpha * literalListener(utterance, thetaPlain, thetaExclamation, activityType).score({state, habituality}))
     return utterance
   }})
 })
 
 // Pragmatic listener
-var pragmaticListener = mem(function(utterance, activity) {
-  return Infer({method: &quot;enumerate&quot;,
-                model: function() {
-    var habituality = habitualityPrior(activity)
+var pragmaticListener = mem(function(utterance, activityType) {
+  return Infer({method: &quot;enumerate&quot;, model: function() {
+    var habituality = habitualityPrior(activityType)
     var thetaPlain = thetaPrior()
     var thetaExclamation = thetaPrior()
-    var thetaOhYeah = thetaPrior()
     var state = statePrior(habituality)
-    observe(speaker(state, habituality, thetaPlain,thetaExclamation,
-                        thetaOhYeah, activity), utterance)
-    return({state: state, habituality: habituality, thetaPlain: thetaPlain, thetaExclamation: thetaExclamation, thetaOhYeah: thetaOhYeah})
+    observe(speaker(state, habituality, thetaPlain, thetaExclamation,
+                        activityType), utterance)
+    return {state, habituality, thetaPlain, thetaExclamation}
   }})
 })
 
 // print(expectation(pragmaticListener(&quot;(...)&quot;, &quot;habitual&quot;)))
 // print(expectation(pragmaticListener(&quot;plain&quot;, &quot;habitual&quot;)))
-// print(expectation(pragmaticListener(&quot;oh yeah&quot;, &quot;habitual&quot;)))</code></pre>
+// print(expectation(pragmaticListener(&quot;exclamation&quot;, &quot;habitual&quot;)))</code></pre>
+<div id="results-2" class="section level3">
+<h3>Results</h3>
+<div id="literal-listener-2" class="section level4">
+<h4>Literal listener</h4>
+<p><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%201-1.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%201-2.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%201-3.png" width="672" /></p>
+</div>
+<div id="speaker-2" class="section level4">
+<h4>Speaker</h4>
+<p><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%202-1.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%202-2.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%202-3.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%202-4.png" width="672" /></p>
+</div>
+<div id="pragmatic-listener-2" class="section level4">
+<h4>Pragmatic listener</h4>
+<p><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-1.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-2.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-3.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-4.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-5.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-6.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-7.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-8.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-9.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-10.png" width="672" /><img src="models.alt_files/figure-html/threshold%20hRSA%20plots%203-11.png" width="672" /></p>
+</div>
+</div>
+<div id="comparison-to-empirical-results-2" class="section level3">
+<h3>Comparison to empirical results</h3>
+<p><img src="models.alt_files/figure-html/threshold%20empirical%20results%201-1.png" width="672" /></p>
+<p><img src="models.alt_files/figure-html/threshold%20empirical%20results%202-1.png" width="672" /></p>
+</div>
 </div>
 <div id="reasoning-about-speaker-optimality" class="section level2">
 <h2>Reasoning about speaker optimality</h2>
-<!-- ![](board.jpg) -->
-<ul>
-<li><span class="math inline">\(P_{L_0}(s|u,h,\lambda) \propto P(s|[\![m]\!]^{\boldsymbol\theta,h})\)</span></li>
-<li><span class="math inline">\(P_{S_1}(u|s,\boldsymbol\theta,h;,\lambda,\alpha,C) \propto P(u;\lambda,C)\exp(\alpha\log P_{L_0}(s|u,\boldsymbol\theta,h))\)</span></li>
-<li><span class="math inline">\(P_{L_1}(s,\boldsymbol\theta,h|u) \propto P_{S_1}(u|s,\boldsymbol\theta,h;\lambda,\alpha,C) \cdot P(\boldsymbol\theta) \cdot P(s|h) \cdot P(h)\)</span></li>
-</ul>
 <pre class="js"><code>// Function to create discrete beta distribution
 var roundTo3 = function(x){
   return Math.round(x * 1000) / 1000
