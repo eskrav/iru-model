@@ -97,6 +97,18 @@ prob_habit <- function(result) {
     group_by(habituality) %>% 
     summarize(prob = sum(prob))
 }
+
+prob_lambda <- function(result) {
+  result %>% 
+    group_by(lambda) %>% 
+    summarize(prob = sum(prob))
+}
+
+prob_alpha <- function(result) {
+  result %>% 
+    group_by(alpha) %>% 
+    summarize(prob = sum(prob))
+}
 ```
 
 ```{r typ pred fit, echo=FALSE}
@@ -461,10 +473,22 @@ ggplot(l0_exc,
 #### Speaker
 
 ```{r threshold hRSA plots 2, fig.height = 2, echo=FALSE, warning=FALSE, message=FALSE}
-results(s_975,"Speaker: Activity Happened, 97.5% Habitual Activity (Thetas 0.7, 0.3)", utterances)
-results(s_675,"Speaker: Activity Happened, 67.5% Habitual Activity (Thetas 0.7, 0.3)", utterances)
-results(s_275,"Speaker: Activity Happened, 27.5% Habitual Activity (Thetas 0.7, 0.3)", utterances)
-results(s_025,"Speaker: Activity Happened, 2.5% Habitual Activity (Thetas 0.7, 0.3)", utterances)
+results(s_975,bquote(list("Speaker: Activity Happened, 97.5% Habitual Activity", 
+    theta["plain"]==0.7, 
+    theta["exc"]==0.3
+    )), utterances)
+results(s_675,bquote(list("Speaker: Activity Happened, 67.5% Habitual Activity", 
+    theta["plain"]==0.7, 
+    theta["exc"]==0.3
+    )), utterances)
+results(s_275,bquote(list("Speaker: Activity Happened, 27.5% Habitual Activity", 
+    theta["plain"]==0.7, 
+    theta["exc"]==0.3
+    )), utterances)
+results(s_025,bquote(list("Speaker: Activity Happened, 2.5% Habitual Activity", 
+    theta["plain"]==0.7, 
+    theta["exc"]==0.3
+    )), utterances)
 ```
 
 #### Pragmatic listener
@@ -478,44 +502,44 @@ results(l1_empty_state,"Pragmatic Listener: \"(...)\" (`state` only)", states)
 results(l1_plain_state,"Pragmatic Listener: \"John paid the cashier.\" (`state` only)", states)
 results(l1_exclamation_state,"Pragmatic Listener: \"John paid the cashier!\" (`state` only)", states)
 
-l1_empty_both <- l1_empty %>% dplyr::select(state, habituality, prob) %>% group_by(state, habituality) %>% summarize(prob = sum(prob))
-l1_empty_both$state <- factor(l1_empty_both$state, levels=states)
-ggplot(l1_empty_both,
-       aes(x = habituality, y = prob, fill=state, color=state)) +
-  geom_bar(stat="identity", colour="black",
-           position=position_dodge(-0.03)) +
-  ylim(0,0.4) +
-  xlim(0,1) +
-  scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9")) +
-  ggtitle(bquote(list(
-    "Pragmatic Listener: \"(...)\", Habitual"
-    )))
-
-l1_plain_both <- l1_plain %>% dplyr::select(state, habituality, prob) %>% group_by(state, habituality) %>% summarize(prob = sum(prob))
-l1_plain_both$state <- factor(l1_plain_both$state, levels=states)
-ggplot(l1_plain_both,
-       aes(x = habituality, y = prob, fill=state, color=state)) +
-  geom_bar(stat="identity", colour="black",
-           position=position_dodge(-0.03)) +
-  ylim(0,0.4) +
-  xlim(0,1) +
-  scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9")) +
-  ggtitle(bquote(list(
-    "Pragmatic Listener: \"John paid the cashier.\", Habitual"
-    )))
-
-l1_exc_both <- l1_exclamation %>% dplyr::select(state, habituality, prob) %>% group_by(state, habituality) %>% summarize(prob = sum(prob))
-l1_exc_both$state <- factor(l1_exc_both$state, levels=states)
-ggplot(l1_exc_both,
-       aes(x = habituality, y = prob, fill=state, color=state)) +
-  geom_bar(stat="identity", colour="black",
-           position=position_dodge(-0.03)) +
-  ylim(0,0.4) +
-  xlim(0,1) +
-  scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9")) +
-  ggtitle(bquote(list(
-    "Pragmatic Listener: \"John paid the cashier!\", Habitual"
-    )))
+# l1_empty_both <- l1_empty %>% dplyr::select(state, habituality, prob) %>% group_by(state, habituality) %>% summarize(prob = sum(prob))
+# l1_empty_both$state <- factor(l1_empty_both$state, levels=states)
+# ggplot(l1_empty_both,
+#        aes(x = habituality, y = prob, fill=state, color=state)) +
+#   geom_bar(stat="identity", colour="black",
+#            position=position_dodge(-0.03)) +
+#   ylim(0,0.4) +
+#   xlim(0,1) +
+#   scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9")) +
+#   ggtitle(bquote(list(
+#     "Pragmatic Listener: \"(...)\", Habitual"
+#     )))
+# 
+# l1_plain_both <- l1_plain %>% dplyr::select(state, habituality, prob) %>% group_by(state, habituality) %>% summarize(prob = sum(prob))
+# l1_plain_both$state <- factor(l1_plain_both$state, levels=states)
+# ggplot(l1_plain_both,
+#        aes(x = habituality, y = prob, fill=state, color=state)) +
+#   geom_bar(stat="identity", colour="black",
+#            position=position_dodge(-0.03)) +
+#   ylim(0,0.4) +
+#   xlim(0,1) +
+#   scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9")) +
+#   ggtitle(bquote(list(
+#     "Pragmatic Listener: \"John paid the cashier.\", Habitual"
+#     )))
+# 
+# l1_exc_both <- l1_exclamation %>% dplyr::select(state, habituality, prob) %>% group_by(state, habituality) %>% summarize(prob = sum(prob))
+# l1_exc_both$state <- factor(l1_exc_both$state, levels=states)
+# ggplot(l1_exc_both,
+#        aes(x = habituality, y = prob, fill=state, color=state)) +
+#   geom_bar(stat="identity", colour="black",
+#            position=position_dodge(-0.03)) +
+#   ylim(0,0.4) +
+#   xlim(0,1) +
+#   scale_fill_manual(values=c("#E69F00", "#999999", "#56B4E9")) +
+#   ggtitle(bquote(list(
+#     "Pragmatic Listener: \"John paid the cashier!\", Habitual"
+#     )))
 
 l1_plain_theta <- l1_plain %>% dplyr::select(theta = thetaPlain, prob) %>% group_by(theta) %>% summarize(prob = sum(prob))
 ggplot(l1_plain_theta, aes(x = theta, y = prob)) + 
@@ -584,38 +608,92 @@ comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habitu
 
 ## Reasoning about speaker optimality
 
+* $P_{L_0}(s|u,h) \propto [\![u]\!] (s) \cdot P(s|h)$
+* $P_{S_1}(u|s,h;\alpha,\lambda,C) \propto P(u;\lambda,C)\exp(\alpha\log P_{L_0}(s|u,h))$
+* $P_{L_1}(s,h,\alpha,\lambda|u) \propto P_{S_1}(u|s,h;\alpha,\lambda,C) \cdot P(s|h) \cdot P(h) \cdot P(\alpha) \cdot P(\lambda)$
+
 ```{r optimality base model, echo=FALSE, message=FALSE, warning=FALSE}
-base_model <- paste(readLines("models/noisy_hrsa_optimality.webppl"), collapse="\n")
+base_model <- paste0(js.prior_pred, "\nvar world_type = \"ordinary\"\n\n", paste(readLines("models/hrsa_optimality.webppl"), collapse="\n"))
 ```
 
 ```{r optimality hRSA model, echo=FALSE, message=FALSE, warning=FALSE}
-# l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
-# l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
-# l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
-# 
-# s_95 <- webppl(paste(base_model, "speaker(\"happened\",0.95)", sep="\n"))
-# s_50 <- webppl(paste(base_model, "speaker(\"happened\",0.5)", sep="\n"))
-# s_5 <- webppl(paste(base_model, "speaker(\"happened\",0.05)", sep="\n"))
-# 
-# l1_empty <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\",\"both\")", sep="\n")))
-# l1_plain <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\",\"both\")", sep="\n")))
-# l1_exclamation <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"exclamation\",\"both\")", sep="\n")))
-# l1_ohyeah <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"oh yeah\",\"both\")", sep="\n")))
-# 
-# l1_empty_habit <- prob_habit(l1_empty)
-# l1_plain_habit <- prob_habit(l1_plain)
-# l1_exclamation_habit <- prob_habit(l1_exclamation)
-# l1_ohyeah_habit <- prob_habit(l1_ohyeah)
-# 
-# l1_empty_state <- prob_state(l1_empty)
-# l1_plain_state <- prob_state(l1_plain)
-# l1_exclamation_state <- prob_state(l1_exclamation)
-# l1_ohyeah_state <- prob_state(l1_ohyeah)
+l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
+l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
+l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
+
+s_95 <- webppl(paste(base_model, "speaker(\"happened\",0.95, 1, 7)", sep="\n"))
+s_50 <- webppl(paste(base_model, "speaker(\"happened\",0.5, 1, 7)", sep="\n"))
+s_5 <- webppl(paste(base_model, "speaker(\"happened\",0.05, 1, 7)", sep="\n"))
+
+l1_empty <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"(...)\")", sep="\n")))
+l1_plain <- as_tibble(webppl(paste(base_model, "pragmaticListener(\"plain\")", sep="\n")))
+
+l1_empty_habit <- l1_empty %>% group_by(habituality) %>% summarize(prob = sum(prob))
+l1_plain_habit <- l1_plain %>% group_by(habituality) %>% summarize(prob = sum(prob))
+
+l1_empty_state <- l1_empty %>% group_by(state) %>% summarize(prob = sum(prob))
+l1_plain_state <- l1_plain %>% group_by(state) %>% summarize(prob = sum(prob))
+
+l1_empty_alpha <- l1_empty %>% group_by(alpha) %>% summarize(prob = sum(prob))
+l1_plain_alpha <- l1_plain %>% group_by(alpha) %>% summarize(prob = sum(prob))
+
+l1_empty_lambda <- l1_empty %>% group_by(lambda) %>% summarize(prob = sum(prob))
+l1_plain_lambda <- l1_plain %>% group_by(lambda) %>% summarize(prob = sum(prob))
 ```
 
 ```{js optimality hRSA code, eval=FALSE, code=base_model}
 ```
 
+### Results
+
+#### Literal listener
+
+```{r optimality hRSA plots 1, fig.height = 2, echo=FALSE}
+utterances <- c("(...)","plain")
+states <- c("happened","didn't happen")
+
+results(l0_95,"Literal Listener: \"(...)\", 95% Habitual Activity", states)
+results(l0_50,"Literal Listener: \"(...)\", 50% Habitual Activity", states)
+results(l0_5,"Literal Listener: \"(...)\", 5% Habitual Activity", states)
+```
+
+#### Speaker
+
+```{r optimality hRSA plots 2, fig.height = 2, echo=FALSE}
+results(s_95,"Speaker: Activity Happened, 95% Habitual Activity", utterances)
+results(s_50,"Speaker: Activity Happened, 50% Habitual Activity", utterances)
+results(s_5,"Speaker: Activity Happened, 5% Habitual Activity", utterances)
+```
+
+#### Pragmatic listener
+
+```{r optimality hRSA plots 3, fig.height = 2, echo=FALSE}
+dist_one(l1_empty_habit,"Pragmatic Listener: \"(...)\" (`habituality` only)")
+dist_one(l1_plain_habit,"Pragmatic Listener: \"John paid the cashier.\" (`habituality` only)")
+
+results(l1_empty_state,"Pragmatic Listener: \"(...)\" (`state` only)", states)
+results(l1_plain_state,"Pragmatic Listener: \"John paid the cashier.\" (`state` only)", states)
+
+ggplot(l1_empty_alpha, aes(x = alpha, y = prob)) +
+    geom_bar(stat="identity", fill = "#E69F00", colour="black") +
+    ylim(0,0.3) +
+  ggtitle("Pragmatic Listener: \"(...)\" (`alpha` only)")
+
+ggplot(l1_plain_alpha, aes(x = alpha, y = prob)) +
+    geom_bar(stat="identity", fill = "#E69F00", colour="black") +
+    ylim(0,0.3) +
+  ggtitle("Pragmatic Listener: \"John paid the cashier.\" (`alpha` only)")
+
+ggplot(l1_empty_lambda, aes(x = lambda, y = prob)) + 
+    geom_bar(stat="identity", fill = "#E69F00", colour="black") + 
+    ylim(0,0.3) +
+  ggtitle("Pragmatic Listener: \"(...)\" (`lambda` only)")
+
+ggplot(l1_plain_lambda, aes(x = lambda, y = prob)) + 
+    geom_bar(stat="identity", fill = "#E69F00", colour="black") + 
+    ylim(0,0.3) +
+  ggtitle("Pragmatic Listener: \"John paid the cashier.\" (`lambda` only)")
+```
 
 
 ----
