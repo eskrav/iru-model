@@ -381,6 +381,8 @@ comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habitu
 
 ## Threshold
 
+This model currently appears to behave more-or-less the same regardless of how speaker optimality parameters are set, even if the values are extremely high.
+
 <!-- ![](board.jpg) -->
 
 * $P_{L_0}(s|u,\boldsymbol\theta,h) \propto P(s|[\![m]\!]^{\boldsymbol\theta,h})$
@@ -616,7 +618,7 @@ comparison %>% group_by(type,experiment) %>% summarize(habituality = mean(habitu
 base_model <- paste0(js.prior_pred, "\nvar world_type = \"ordinary\"\n\n", paste(readLines("models/hrsa_optimality.webppl"), collapse="\n"))
 ```
 
-```{r optimality hRSA model, echo=FALSE, message=FALSE, warning=FALSE}
+```{r optimality hRSA model, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE, cache.lazy=FALSE}
 l0_95 <- webppl(paste(base_model, "literalListener(\"(...)\",0.95)", sep="\n"))
 l0_50 <- webppl(paste(base_model, "literalListener(\"(...)\",0.5)", sep="\n"))
 l0_5 <- webppl(paste(base_model, "literalListener(\"(...)\",0.05)", sep="\n"))
