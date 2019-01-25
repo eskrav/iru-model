@@ -975,6 +975,193 @@ var pragmaticListener = function(utterance) {
 <div id="pragmatic-listener-3" class="section level4">
 <h4>Pragmatic listener</h4>
 <p><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-1.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-2.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-3.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-4.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-5.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-6.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-7.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203-8.png" width="672" /></p>
+</div>
+</div>
+</div>
+<div id="reasoning-about-speaker-optimality-2" class="section level2">
+<h2>Reasoning about speaker optimality (2)</h2>
+<ul>
+<li><span class="math inline">\(P_{L_0}(s|u,h) \propto [\![u]\!] (s) \cdot P(s|h)\)</span></li>
+<li><span class="math inline">\(P_{S_1}(u|s,h;\alpha,\lambda,C) \propto P(u;\lambda,C)\exp(\alpha\log P_{L_0}(s|u,h))\)</span></li>
+<li><span class="math inline">\(P_{L_1}(s,h,\alpha,\lambda|u) \propto P_{S_1}(u|s,h;\alpha,\lambda,C) \cdot P(s|h) \cdot P(h) \cdot P(\alpha) \cdot P(\lambda)\)</span></li>
+</ul>
+<pre class="js"><code>var beta_high_a = 2.196026
+var beta_high_b = 0.410857
+var beta_low_a = 0.902843
+var beta_low_b = 1.367937
+
+var world_type = &quot;ordinary&quot;
+
+// Function to create discrete beta distribution
+var roundTo3 = function(x){
+  return Math.round(x * 1000) / 1000
+}
+
+var granularity = 20
+var midBins = map(function(x) {roundTo3(x/granularity + 1/(2*granularity))}, 
+                  _.range(0,granularity))
+
+var DiscreteBeta = cache(function(a, b){
+  Infer({model: function(){
+    categorical({
+      vs:midBins,
+      ps:map(function(x){
+        Math.exp(Beta({a, b}).score(x))
+      }, midBins)
+    })
+  }})
+})
+
+// Is this a world in which the conventionally habitual activity is
+// habitual (presumed cashier-payer) or non-habitual (presumed non-payer)?
+// (mostly for demonstration)
+var world = [&quot;wonky&quot;,&quot;ordinary&quot;]
+
+// Assume uniform likelihood
+var worldPrior = function() {
+  categorical([0.5, 0.5], world)
+}
+
+// Habituality priors
+// beta distributions fit to empirical priors
+var habitualityPrior = function(world) {
+  world === &quot;ordinary&quot; ? sample(DiscreteBeta(beta_high_a, beta_high_b)) :
+  world === &quot;wonky&quot; ? sample(DiscreteBeta(beta_low_a, beta_low_b)) :
+  true
+}
+
+// Current activity state
+// the activity being described at this point in time either took place, or didn&#39;t
+var state = [&quot;happened&quot;,&quot;didn&#39;t happen&quot;]
+
+// State priors
+// whether the activity took place is dependent on prior likelihood
+var statePrior = function(habituality) {
+  flip(habituality) ? state[0] : state[1]
+}
+
+// Utterances
+// choice of 4 utterances; prosody not modeled separately as affects only one variant
+var utterance = [&#39;plain&#39;,&#39;(...)&#39;]
+
+// Utterance cost
+// (rough estimate of number of constituents + extra for articulatory effort)
+var cost = {
+  &quot;plain&quot;: 1,
+  &quot;(...)&quot;: 0
+}
+
+// Meaning
+// literal meaning of all overt utterances is that activity happened.
+// literal meaning of null &quot;utterance&quot; is consistent with all activity states
+var meaning = function(utt,state) {
+  utt === &quot;plain&quot; ? state === &quot;happened&quot; : 
+  utt === &quot;(...)&quot; ? true :
+  true
+}
+
+// Speaker optimality (maximizing utility)
+var alpha = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
+
+var alphaPrior = function() {
+  uniformDraw(alpha)
+}
+
+// Speaker optimality (minimizing cost)
+var lambda = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
+
+var lambdaPrior = function() {
+  uniformDraw(lambda)
+}
+
+// Utterance prior
+// utterance prior determined by utterance cost, as defined above
+var utterancePrior = function(lambda) {
+  var uttProbs = map(function(u) {return Math.exp(-lambda * cost[u])}, utterance)
+  return categorical(uttProbs, utterance)
+}
+
+// Literal listener
+var literalListener = mem(function(utterance, habituality) {
+  return Infer({method: &#39;enumerate&#39;, model: function() {
+    var state = statePrior(habituality)
+    condition(meaning(utterance,state))
+    return state
+  }})
+})
+
+// Speaker
+var speaker = mem(function(state, habituality, lambda, alpha) {
+  return Infer({method: &#39;enumerate&#39;, model: function() {
+    var utterance = utterancePrior(lambda)
+    factor(alpha * literalListener(utterance, habituality).score(state))
+    return utterance
+  }})
+})
+
+// Pragmatic listener (base)
+// assume high-habit world for demonstration
+var pragmaticListener_base = function(utterance) {
+  return Infer({method: &#39;enumerate&#39;, model: function() {
+    var world = world_type
+    var alpha = alphaPrior()
+    var lambda = lambdaPrior()
+    var habituality = habitualityPrior(world)
+    var state = statePrior(habituality)
+    observe(speaker(state, habituality, lambda, alpha),utterance)
+    return {habituality}
+  }})
+}
+
+// Pragmatic listener
+// assume high-habit world for demonstration
+var pragmaticListener = function(utterance) {
+  return Infer({method: &#39;enumerate&#39;, model: function() {
+    var alpha = alphaPrior()
+    var lambda = lambdaPrior()
+    var habituality = pragmaticListener_base(utterance)
+    var state = statePrior(habituality)
+    observe(speaker(state, habituality, lambda, alpha),utterance)
+    return {state, habituality, alpha, lambda}
+  }})
+}
+
+
+// viz(literalListener(&quot;(...)&quot;,0.95))
+// viz(literalListener(&quot;(...)&quot;,0.5))
+// viz(literalListener(&quot;(...)&quot;,0.05))
+
+// viz(speaker(&quot;happened&quot;,0.95, 1, 7))
+// viz(speaker(&quot;happened&quot;,0.5, 1, 7))
+// viz(speaker(&quot;happened&quot;,0.05, 1, 7))
+
+// viz(marginalize(pragmaticListener(&quot;(...)&quot;), &quot;habituality&quot;))
+// viz(marginalize(pragmaticListener(&quot;plain&quot;), &quot;habituality&quot;))
+
+// viz(marginalize(pragmaticListener(&quot;(...)&quot;), &quot;state&quot;))
+// viz(marginalize(pragmaticListener(&quot;plain&quot;), &quot;state&quot;))
+
+// viz(marginalize(pragmaticListener(&quot;(...)&quot;), &quot;alpha&quot;))
+// viz(marginalize(pragmaticListener(&quot;plain&quot;), &quot;alpha&quot;))
+
+// viz(marginalize(pragmaticListener(&quot;(...)&quot;), &quot;lambda&quot;))
+// viz(marginalize(pragmaticListener(&quot;plain&quot;), &quot;lambda&quot;))</code></pre>
+<div id="results-4" class="section level3">
+<h3>Results</h3>
+<div id="literal-listener-4" class="section level4">
+<h4>Literal listener</h4>
+<p><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%201%202-1.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%201%202-2.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%201%202-3.png" width="672" /></p>
+</div>
+<div id="speaker-4" class="section level4">
+<h4>Speaker</h4>
+<p><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%202%202-1.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%202%202-2.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%202%202-3.png" width="672" /></p>
+</div>
+<div id="pragmatic-listener-4" class="section level4">
+<h4>Pragmatic listener</h4>
+<pre><code>## Warning: Removed 1 rows containing missing values (position_stack).</code></pre>
+<p><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-1.png" width="672" /></p>
+<pre><code>## Warning: Removed 1 rows containing missing values (position_stack).</code></pre>
+<p><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-2.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-3.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-4.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-5.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-6.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-7.png" width="672" /><img src="models.alt_files/figure-html/optimality%20hRSA%20plots%203%202-8.png" width="672" /></p>
 <hr />
 </div>
 </div>
